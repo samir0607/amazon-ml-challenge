@@ -43,8 +43,7 @@ def write_lists(pairs: pl.DataFrame, col: str, out):
 
 
 OUTPUT.mkdir(exist_ok=True)
-write_lists(C, "candidate_entity_ids", OUTPUT / "candidate_pairs.tsv")
-print(f"candidates: {C.height} pairs, {C.height / s1.height:.2f} per S1", flush=True)
+tau = cfg.get("cascade_tau", 0.0)
 
 score_path = CACHE / f"test_scores_{args.name}.parquet"
 if args.from_scores and score_path.exists():
@@ -54,23 +53,33 @@ else:
     compute_pair_features("test", C, f"test_{feat_name}")
     parts = sorted((CACHE / "pairs" / f"test_test_{feat_name}").glob("*.parquet"))
     BASE, FEATS2 = cfg["base"], cfg["feats2"]
-    s1_models = [lgb.Booster(model_file=str(CACHE / f"stage1_{args.name}_fold{f}.txt")) for f in range(5)]
-    p1 = []
-    for pth in parts:
-        d = pl.read_parquet(pth)
-        X = d.select(BASE).to_numpy().astype(np.float32)
-        p1.append(d.select("q", "t").with_columns(
-            p1=pl.Series(np.mean([m.predict(X, num_threads=9) for m in s1_models], axis=0).astype(np.float32))))
-    P1 = pl.concat(p1)
+    p1_path = CACHE / f"test_p1_{args.name}.parquet"
+    if p1_path.exists():
+        P1 = pl.read_parquet(p1_path)
+    else:
+        s1_models = [lgb.Booster(model_file=str(CACHE / f"stage1_{args.name}_fold{f}.txt")) for f in range(5)]
+        p1 = []
+        for pth in parts:
+            d = pl.read_parquet(pth)
+            X = d.select(BASE).to_numpy().astype(np.float32)
+            p1.append(d.select("q", "t").with_columns(
+                p1=pl.Series(np.mean([m.predict(X, num_threads=9) for m in s1_models], axis=0).astype(np.float32))))
+        P1 = pl.concat(p1)
+        P1.write_parquet(p1_path)
+    P1 = P1.filter(pl.col("p1") >= tau) if tau > 0 else P1  # learned-blocking cascade
     S2X = stage2_frame("test", P1)
     b2 = lgb.Booster(model_file=str(CACHE / f"stage2_{args.name}_final.txt"))
     scored = []
     for pth in parts:
-        d = pl.read_parquet(pth).join(S2X, on=["q", "t"], how="left")
+        d = pl.read_parquet(pth).join(S2X, on=["q", "t"], how="inner")
         scored.append(d.select("q", "t", "p1").with_columns(
             p=pl.Series(b2.predict(d.select(FEATS2).to_numpy().astype(np.float32), num_threads=9).astype(np.float32))))
     F = pl.concat(scored)
     F.write_parquet(CACHE / f"test_scores_{args.name}.parquet")
+
+# ---- final candidate set = exactly the pairs stage 2 scored (after the cascade)
+write_lists(F, "candidate_entity_ids", OUTPUT / "candidate_pairs.tsv")
+print(f"candidates after cascade (p1 >= {tau}): {F.height} pairs, {F.height / s1.height:.2f} per S1", flush=True)
 
 # ---- decision rule chosen on validation
 rule = cfg["rule"]
@@ -81,7 +90,7 @@ if rule["rule"] == "expF":
     d = expected_f(d, min_p=rule.get("min_p") or 0.0, extra_mass=rule.get("extra_mass") or 0.0)
 else:
     d = threshold(d, rule["thr"])
-M = d.join(C.select("q", "t"), on=["q", "t"], how="semi")  # matches must be candidates
+M = d.join(F.select("q", "t"), on=["q", "t"], how="semi")  # matches must be candidates
 assert M.height == d.height
 write_lists(M, "matched_entity_ids", OUTPUT / "matching_results.tsv")
 by_c = M.join(load_source("test", "source1").select(q="idx", country="country"), on="q").group_by("country").agg(

@@ -37,6 +37,7 @@ ap.add_argument("--s2-train-s1", type=int, default=1_200_000)
 ap.add_argument("--easy-neg-keep", type=float, default=0.25)
 ap.add_argument("--tag", default="v1")
 ap.add_argument("--final", action="store_true")
+ap.add_argument("--cascade-tau", type=float, default=0.01, help="learned-blocking filter: final candidates = pairs with stage-1 p1 >= tau")
 ap.add_argument("--rule-min-p", type=float, default=0.6, help="min_p fixed for the final expected-F rule (0.6 chosen for singleton robustness)")
 ap.add_argument("--feat-tag", default=None, help="reuse candidates/pair features of this tag")
 args = ap.parse_args()
@@ -58,7 +59,7 @@ def sample_q(fold_mask, n, seed):
 
 
 def cached_stage2(p1):
-    path = CACHE / f"s2x_train_{args.tag}_top{args.top_n}.parquet"
+    path = CACHE / f"s2x_train_{args.tag}_top{args.top_n}_tau{args.cascade_tau}.parquet"
     if path.exists():
         return pl.read_parquet(path)
     d = context_frame(p1).join(sibling_features("train", p1), on=["q", "t"], how="left")
@@ -159,13 +160,16 @@ else:
     P1.write_parquet(p1_path)
 
 # ---------------------------------------------------------------- 5 context + siblings (ALL train pairs)
+# Cascade: the final candidate set is the stage-1 survivors; context / sibling features and
+# stage 2 only ever see those pairs.
+P1 = P1.filter(pl.col("p1") >= args.cascade_tau) if args.cascade_tau > 0 else P1
 S2X = cached_stage2(P1)
 FEATS2 = BASE + STAGE2_EXTRA
 
 
 def rows2(qs, seed):
     """Stage-2 rows; easy negatives (p1 < 0.005) subsampled with inverse-prob weights."""
-    d = rows_for(qs).join(S2X, on=["q", "t"], how="left")
+    d = rows_for(qs).join(S2X, on=["q", "t"], how="inner")
     easy = (d["y"] == 0) & (d["p1"] < 0.005)
     keep = ~easy | pl.Series(np.random.default_rng(seed).random(d.height) < args.easy_neg_keep)
     return d.filter(keep).with_columns(w=pl.when(easy.filter(keep)).then(1.0 / args.easy_neg_keep).otherwise(1.0).cast(pl.Float32))
@@ -176,7 +180,7 @@ tr = rows2(sample_q(pl.col("fold") != 0, args.s2_train_s1, 99), 0)
 b2 = fit(tr, FEATS2, 0)
 del tr
 b2.save_model(str(CACHE / f"stage2_{pair_name}_fold0.txt"))
-V = rows_for(folds.filter(pl.col("fold") == 0)["q"].to_numpy()).join(S2X, on=["q", "t"], how="left")
+V = rows_for(folds.filter(pl.col("fold") == 0)["q"].to_numpy()).join(S2X, on=["q", "t"], how="inner")
 V = V.with_columns(p=pl.Series(predict(b2, V, FEATS2).astype(np.float32)))
 V.select("q", "t", "y", "p", "p1", "src").write_parquet(CACHE / f"val_pred_{pair_name}.parquet")
 imp = sorted(zip(FEATS2, b2.feature_importance("gain")), key=lambda x: -x[1])[:25]
@@ -235,5 +239,5 @@ if args.final:
     bf.save_model(str(CACHE / f"stage2_{pair_name}_final.txt"))
     (CACHE / f"final_{pair_name}.json").write_text(json.dumps(
         {"base": BASE, "feats2": FEATS2, "rule": {k: best[k] for k in ("score", "rule", "thr", "excl", "min_p", "extra_mass")},
-         "top_n": args.top_n, "tag": args.tag, "feat_tag": args.feat_tag}))
+         "top_n": args.top_n, "tag": args.tag, "feat_tag": args.feat_tag, "cascade_tau": args.cascade_tau}))
     print("saved final stage-2", flush=True)
