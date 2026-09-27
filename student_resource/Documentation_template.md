@@ -1,7 +1,7 @@
 # ML Challenge 2026: Business Entity Resolution Solution
 
 **Team Name:** Transformers
-**Team Members:** [List all team members]
+**Team Members:** Yash Bindal, Samir Gupta, Shreyas Jain, Nikunj Sharma
 **Submission Date:** 2026-09-27
 
 ---
