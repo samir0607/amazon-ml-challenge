@@ -1,6 +1,8 @@
 # Business Entity Resolution: Final Report
 
-**Final validation score: macro F0.5 = 0.97205.** This is measured on fold 0: 441,365 held-out Source 1 (S1) entities, matched against the full train S2/S3 index. The final candidate set keeps 98.16% of true pairs with exactly 12 candidates per S1. The submission passes the official validator (`--check-ids`, no subset warnings).
+**Final validation score: macro F0.5 = 0.97217.** This is measured on fold 0: 441,365 held-out Source 1 (S1) entities, matched against the full train S2/S3 index.
+
+The final candidate set is the output of a three-step blocking cascade. It averages **4.65 candidates per S1 on validation and 5.12 on test** (p95 = 9, max = 12), keeping 97.97% of true pairs. The decision rule and the cascade threshold were confirmed by 5-fold cross-validation (mean 0.97101, std 0.00004 across folds). The submission passes the official validator (`--check-ids`, no subset warnings).
 
 ---
 
@@ -68,7 +70,12 @@ All rows are measured on the 50k screening S1 against the full index; the final 
 | **Union pruned top-12 (final)** | **0.9819** | **12** | **12** |
 | Union pruned top-15 | 0.9834 | 15 | 15 |
 | Union pruned top-20 | 0.9844 | 20 | 20 |
-| **Final set on full fold 0** | **0.9816** | **12** | **12** |
+| Top-12 set on full fold 0 | 0.9816 | 12 | 12 |
+| Cascade: top-12 then stage-1 p1 ≥ 0.01, full fold 0 | 0.9797 | 4.64 | 8 |
+| **Cascade p1 ≥ 0.01, final (stage 2 retrained on survivors)** | **0.9797** | **4.65** | **8** |
+| Cascade p1 ≥ 0.03 | 0.9763 | 4.03 | 7 |
+| Cascade p1 ≥ 0.05 | 0.9746 | 3.88 | 7 |
+| Pruner-score threshold instead (retrieval features only), comparable size | 0.9596 | 4.67 | 8 |
 
 Decisions:
 
@@ -76,6 +83,9 @@ Decisions:
 - **The exact-key blockers were dropped.** They add no more than 0.0001 recall on top of TF-IDF.
 - **Top-12 was chosen.** Going to top-15 would add only 0.0015 recall for 25% more pairs.
 - **Char-level TF-IDF over all queries was rejected on cost.** It took 326 s per 50k queries, about 4 hours for the full split, for low recall.
+- **The final candidate set is a learned-blocking cascade.** Smaller candidate sets rank higher in the final evaluation, so a third blocking step keeps only pairs whose stage-1 pair score (string-feature LightGBM, cross-fitted) reaches 0.01. Stage 2 then runs inference only over those survivors, which are exactly `candidate_pairs.tsv`. This cut candidates from 12 to 4.65 per S1 with no F0.5 loss: 0.97165 → 0.97173 at equal training size.
+- **A retrieval-only threshold at a similar size loses 0.004 F0.5**, so the learned cascade is essential.
+- **A 6th blocker for non-Latin names was rejected.** It is a reverse char-TF-IDF over phonetic skeletons of Indic-script targets. It adds 0.05% of true pairs, of which only about 40% are matchable, for about +0.00005 F0.5.
 
 ## 4. Matcher experiments
 
@@ -89,7 +99,8 @@ All rows are on fold 0 (441,365 S1) with the full candidate set.
 | + set-level features (expected matches / #candidates above 0.5 per S1) | — | — | 0.9685 |
 | + more stage-2 data (300k → 900k S1) | — | — | 0.9695 |
 | + sibling-consistency features (300k S1) | — | — | 0.9702 |
-| **v2 final:** stage-1 on 600k S1 per fold, stage-2 on 1.2M S1, set + sibling features | **0.9926** | **0.9415** | **0.97205** |
+| v2: stage-1 on 600k S1 per fold, stage-2 on 1.2M S1, set + sibling features (12 candidates) | 0.9926 | 0.9415 | 0.97205 |
+| **v3 final: v2 + cascade (p1 ≥ 0.01, 4.65 candidates), stage 2 retrained on survivors** | **0.9926** | **0.9420** | **0.97217** |
 
 Decision rules for the v2 scores:
 
@@ -116,6 +127,9 @@ Decision rules for the v2 scores:
 | Stage-2 training data 300k → 900k S1 | +0.0011 F0.5 |
 | Exclusivity post-pass | +0.00004 (stage 2 already learns it via competition features; kept as a guarantee) |
 | Tuned expected-F gate | +0.0003 on the held-out half of fold 0 |
+| Learned-blocking cascade p1 ≥ 0.01 (12 → 4.65 candidates per S1) | +0.00008 (0.97165 → 0.97173, same training size) |
+| 5-fold CV of the decision rule (exclusivity scope × expected-F grid × thresholds × cascade τ) | final rule best on 4/4 folds: 0.97101 ± 0.00004; τ = 0.01 costs 0.000001 |
+| Non-Latin skeleton blocker | about +0.00005 estimated; rejected |
 
 These components were planned but **not run** because of compute and time: a neural cross-encoder, dense embeddings, a fine-tuned bi-encoder, and synthetic augmentation. See section 12.
 
@@ -165,10 +179,11 @@ S1, S2, S3 TSVs
   → blocking (country-scoped TF-IDF, word level):
         reverse name+addr top-5 | reverse addr top-3 | reverse name top-3
         forward name+addr top-30 | forward addr top-10
-  → union (about 60/S1) → LightGBM pruner on retrieval features → top-12/S1  == candidate_pairs.tsv
+  → union (about 60/S1) → LightGBM pruner on retrieval features → top-12/S1
   → 51 pair features + retrieval features + name-frequency features
-  → stage-1 LightGBM, 5-fold cross-fitted (OOF p1)
-  → context (per-S1 rank/gap/set stats, per-target competition margin) + sibling consistency
+  → stage-1 LightGBM pair scorer, 5-fold cross-fitted (OOF p1)
+  → cascade filter p1 >= 0.01 (about 4.65/S1)  == candidate_pairs.tsv
+  → context within survivors (per-S1 rank/gap/set stats, per-target competition margin) + sibling consistency
   → stage-2 LightGBM
   → exclusivity (each target keeps its best S1) → per-S1 expected-F0.5 subset (min_p 0.6)
   → matching_results.tsv
@@ -181,6 +196,7 @@ S1, S2, S3 TSVs
 - **Pruner:** LightGBM, lr 0.1, 63 leaves, 200 rounds, trained on 150k S1 from folds 1–4; top_n = 12.
 - **Stage 1:** LightGBM binary, lr 0.05, 255 leaves, min_data_in_leaf 100, feature/bagging fraction 0.8, L2 1.0, early stopping on 10% of S1 groups; 600k S1 per fold model; 71 features.
 - **Stage 2:** same parameters. It uses the 71 stage-1 features plus 13 context and 6 sibling features. It is trained on 1.2M S1; easy negatives (p1 < 0.005) are kept at 25% with weight 4.
+- **Cascade:** candidate set = pairs with stage-1 p1 ≥ 0.01. Stage-2 context and sibling features are computed within the survivors only.
 - **Decision:** exclusivity, then expected-F0.5 with `min_p = 0.6` and `extra_mass = 0.2`.
 - **Test-time stage-1** is the average of the 5 fold models. Averaging was checked not to shift the score distribution: 4.4% vs 4.5% of pairs in the uncertain band.
 
@@ -189,10 +205,12 @@ S1, S2, S3 TSVs
 | Statistic | Value |
 |---|---|
 | Test S1 | 1,732,544 (all present in both output files) |
-| Candidate pairs | 20,790,520 (12 per S1, p95 = 12, max = 12) |
-| Reduction ratio vs same-country all-pairs | > 99.9998% |
-| Predicted matches | 5,896,036 pairs (3.40 per S1) |
-| S1 predicted with no match | 97,459 (5.6%; train singleton rate is 5.6%) |
+| Candidate pairs | **8,877,239 (5.12 per S1, median 5, p95 = 9, max = 12)** |
+| S1 with no candidates | 19,706 (the cascade found nothing plausible) |
+| Candidates per S1 by country | US 5.06, India 4.99, France 5.71 |
+| Reduction ratio vs same-country all-pairs | > 99.9999% |
+| Predicted matches | 5,899,104 pairs (3.40 per S1) |
+| S1 predicted with no match | 97,583 (5.6%; train singleton rate is 5.6%) |
 
 Predictions by country:
 

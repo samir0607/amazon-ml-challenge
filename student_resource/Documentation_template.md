@@ -12,7 +12,8 @@ We use a blocking-plus-two-stage-GBDT pipeline built entirely on the provided da
 
 - **Key innovation:** *reverse* blocking. Every S2/S3 record retrieves its best S1 entities, which exploits the fact that each record belongs to at most one S1. Its top-1 alone captures 94.6% of true pairs at 4.7 candidates per S1.
 - **Precision:** a stage-2 matcher uses competition features (how strongly each S1 beats the other S1s competing for the same record) and sibling-consistency features. A per-entity expected-F0.5 decision rule treats "no match" as a first-class outcome.
-- **Result:** held-out macro F0.5 of **0.9721**, with **12 candidates per S1** at **98.2% candidate recall**.
+- **Candidates:** a learned-blocking cascade (retrieval, then pruner, then pair scorer) keeps only **4.65 candidates per S1 on validation (5.12 on test)** at **98.0% candidate recall**.
+- **Result:** held-out macro F0.5 of **0.9722**, confirmed by 5-fold cross-validation.
 
 ---
 
@@ -83,23 +84,27 @@ Measured on the training data:
 | Forward name+address | S1 → target | core name tokens + skeleton tokens + address tokens | 30 |
 | Forward address | S1 → target | address tokens | 10 |
 
-- **Pruning:** the union (about 60 candidates per S1, 98.56% recall) is pruned by a LightGBM ranker on retrieval features. Those features are:
+- **Pruning:** the union (about 60 candidates per S1, 98.56% recall) is pruned in two learned steps. The first is a LightGBM ranker on retrieval features. Those features are:
   - per-blocker scores and ranks
   - number of blockers that retrieved the pair
   - the target's global best and second-best S1 score
   - gap to the S1's best candidate
-- **Final set:** top-12 per S1.
+- **Step one keeps the top-12 per S1** (98.19% recall).
+- **Step two is a learned-blocking cascade.** A cross-fitted LightGBM pair scorer over string/numeric features keeps only pairs with score ≥ 0.01. The survivors are exactly `candidate_pairs.tsv`, and the final matcher runs inference only on them.
+- **Effect:** 12 → **4.65 candidates per S1** on validation with no F0.5 loss (0.97165 → 0.97173 at equal training size). A retrieval-only threshold at a similar size would cost 0.004 F0.5.
 - **Rejected blockers:** exact-key blockers were measured and dropped (at most +0.0001 recall). Char-n-gram retrieval over all queries was too slow for too little gain.
 
 **Candidate pairs generated:**
-- test: **20,790,520** (exactly 12 per S1 for 1,732,544 S1; reduction ratio > 99.9998%)
-- train: 26.5M (12 per S1)
+- test: **8,877,239** for 1,732,544 S1: mean **5.12**, median 5, p95 9, max 12; reduction ratio > 99.9999%
+- validation: 4.65 per S1
 
 **How we ensured true matches were not lost:**
 - Every blocker and every union/pruning depth was measured for pair recall, S1 full coverage, mean/p95/max candidates and per-source recall.
 - Leave-one-out ablations confirmed each kept blocker's contribution.
 - The pruning depth was chosen at the knee of the curve: top-10 gives 98.02%, **top-12 gives 98.19%**, and top-20 gives 98.44%.
-- Recall is equal for S2 and S3 (98.16% each). Fold-0 recall is **98.16%**.
+- The cascade threshold was chosen by retraining the final matcher at τ ∈ {0, 0.01, 0.03, 0.05} and cross-validating over 5 folds. τ = 0.01 keeps 99.8% of the top-12 recall.
+- Final fold-0 candidate recall is **97.97%**.
+- Rejected additions: a 6th, non-Latin-name blocker (+0.05% recall, about +0.00005 F0.5) and exact-key blockers (+0.0001 recall).
 
 ---
 
@@ -150,12 +155,12 @@ These parameters were tuned on half of the validation fold and confirmed on the 
 
 ## 5. Results & Error Analysis
 
-**F_0.5 Score (macro):** **0.97205** on a held-out validation fold of 441,365 S1 entities (grouped split, full target index).
+**F_0.5 Score (macro):** **0.97217** on a held-out validation fold of 441,365 S1 entities (grouped split, full target index). 5-fold cross-validation of the decision rule gives 0.97101 ± 0.00004.
 
 | Metric | Value |
 |---|---|
 | Micro precision | 0.9926 |
-| Micro recall | 0.9415 |
+| Micro recall | 0.9420 |
 | Singleton F0.5 | 0.969 |
 
 Progression:
@@ -166,7 +171,8 @@ Progression:
 | + competition context | 0.9669 |
 | + set features | 0.9685 |
 | + sibling features | 0.9702 |
-| + more data (final) | 0.9721 |
+| + more data | 0.9721 |
+| + learned-blocking cascade (final, 4.65 candidates per S1) | 0.9722 |
 
 **Common false positives (wrong merges):**
 - same name and street with a conflicting building number

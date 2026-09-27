@@ -1,7 +1,8 @@
 # Current best pipeline
 
-**Validation (fold 0, 441,365 S1, full target index): macro F0.5 = 0.97205** (v2, min_p=0.6; 2026-09-27)
-Candidate set: pair recall 0.9816, exactly 12 candidates per S1.
+**Validation (fold 0, 441,365 S1, full target index): macro F0.5 = 0.97217** (v3 cascade; 2026-09-27)
+5-fold CV of the decision rule: 0.97101 ± 0.00004.
+Candidate set: learned-blocking cascade, 4.65 candidates per S1 on validation (5.12 on test), pair recall 0.9797.
 
 ## Pipeline
 1. **Normalization v3.** Multi-representation names: canonical legal forms, core name, sorted tokens, phonetic/transliteration skeleton, domain-name word segmentation. Addresses: abbreviation expansion (generic + France-scoped), region tokens, numbers, postal.
@@ -38,3 +39,6 @@ Each component was kept only on a measured fold-0 gain (see experiments/experime
 | v2: stage-1 on 600k S1/fold, stage-2 on 1.2M S1 (easy negatives subsampled 25%, weighted) | 0.97021 → 0.97205 |
 
 Decision rule: min_p = 0.6 was chosen over 0.5. Their F0.5 is tied (0.97205 vs 0.97207), but 0.6 does much better on singletons (0.969 vs 0.959). That protects against a different singleton rate on test, e.g. the unseen France data.
+| v3: learned-blocking cascade (stage-1 p1 ≥ 0.01 defines `candidate_pairs.tsv`); stage 2 retrained on survivors | 0.97205 → 0.97217, 12 → 4.65 candidates per S1 |
+| 5-fold CV of the decision rule and τ | final rule best on 4/4 folds |
+| Rejected: non-Latin skeleton blocker | about +0.00005 |
