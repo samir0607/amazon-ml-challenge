@@ -130,6 +130,9 @@ Decision rules for the v2 scores:
 | Learned-blocking cascade p1 ≥ 0.01 (12 → 4.65 candidates per S1) | +0.00008 (0.97165 → 0.97173, same training size) |
 | 5-fold CV of the decision rule (exclusivity scope × expected-F grid × thresholds × cascade τ) | final rule best on 4/4 folds: 0.97101 ± 0.00004; τ = 0.01 costs 0.000001 |
 | Non-Latin skeleton blocker | about +0.00005 estimated; rejected |
+| Stage-2 LightGBM tuning (lr 0.03, 127/511 leaves, min leaf 300, feature fraction 0.6, L2 5), 400k S1 | all within ±0.0001 of the production parameters; current parameters kept |
+| LightGBM + CatBoost blend (0.7 / 0.3) | +0.00011 at 400k S1, but **−0.00013 at full 1.2M S1**; rejected |
+| LightGBM L2 = 5 at full size | 0.972177 vs 0.97217 (tie); kept L2 = 1 |
 
 These components were planned but **not run** because of compute and time: a neural cross-encoder, dense embeddings, a fine-tuned bi-encoder, and synthetic augmentation. See section 12.
 
@@ -245,6 +248,7 @@ Main false-negative causes:
 
 Other limitations:
 
+- **Stage-2 tuning has converged.** Parameter variants, CatBoost, and blends all landed within noise of the production model.
 - **Not attempted because of compute:**
   - **The cross-encoder** (`ber/models/crossencoder.py`, `scripts/train_ce.py`) is implemented and smoke-tested. It trains at about 85 pairs/s on Apple MPS, so a full run needs about 3.3 h, and the AWS account had GPU quota 0.
   - **The non-Latin skeleton reverse blocker** (`rev_skel_nonascii`) was run on train but not integrated, because that requires a full re-train.

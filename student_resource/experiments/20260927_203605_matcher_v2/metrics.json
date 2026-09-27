@@ -1,0 +1,16 @@
+{
+  "excl": true,
+  "macro_f05": 0.9721246419414358,
+  "n_s1": 441365,
+  "micro_precision": 0.9925547372735063,
+  "micro_recall": 0.941295133304456,
+  "f05_singletons": 0.9594009309856304,
+  "f05_nonsingletons": 0.9728790682822486,
+  "singleton_false_match_rate": 0.04059906901436956,
+  "empty_pred_on_nonsingleton_rate": 0.006691307060912975,
+  "n_pred_pairs": 1449378,
+  "min_p": 0.6,
+  "extra_mass": 0.2,
+  "runtime_s": 0.1,
+  "peak_rss_gb": 8.8
+}

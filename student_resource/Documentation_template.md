@@ -141,6 +141,9 @@ Measured on the training data:
 **Model type:** Two-stage LightGBM (binary log-loss).
 - **Stage 1:** 5-fold cross-fitted, 600k S1 per fold model, 71 features.
 - **Stage 2:** 90 features, trained on 1.2M S1 with 25% sampling of easy negatives and importance weights.
+- **Tuning:** screened on a fixed 400k-S1 sample, then confirmed at full size:
+  - learning rate, leaves, min leaf size, feature fraction and L2 all landed within ±0.0001 of the production parameters
+  - a LightGBM + CatBoost blend gained +0.00011 at 400k S1 but lost 0.00013 at full size, so it was rejected
 - **Negatives:** hard negatives come from the candidate set itself (retrieved lookalikes: same brand in another location, same address, generic names, sibling entities).
 - **Test-time stage 1:** the average of the 5 fold models.
 

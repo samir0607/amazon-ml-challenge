@@ -59,3 +59,14 @@ exp_id,timestamp,stage,description,tier,runtime_s,peak_rss_gb,pair_recall,cand_m
 20260927_195036_cv_decision_5fold,2026-09-27 19:50,decision,5-fold CV of decision rule + cascade tau,cv,0.0,0.02,0.97983,4.6498,,0.97101,,,0.96747,"keep: global exclusivity + expF(0.6,0.2) + tau 0.01",best of grid on 4/4 folds; std 0.000043; tau 0.01 costs -0.000001 vs 12 cands
 20260927_195100_recall_skel_nonascii_blocker,2026-09-27 19:51,blocking,"add reverse skeleton char blocker for non-Latin names (screen, scored by OOF stage-1)",screen,0.0,0.02,,,,,,,,reject,"+96/173318 true pairs (0.05%), only ~39 matchable -> ~+0.00005 F; adds ~0.016 cands/S1 and 2.5h retrain"
 20260927_195446_matcher_v2,2026-09-27 19:54,matching,two-stage LightGBM + context features,fold0,0.1,9.32,,,,0.97219,0.9924,0.94216,0.95928,,
+20260927_200545_gbdt_base,2026-09-27 20:05,matching,stage-2 variant base (400k S1),fold0,0.0,3.41,,,,0.97137,,,0.96762,,
+20260927_200818_gbdt_lr03,2026-09-27 20:08,matching,stage-2 variant lr03 (400k S1),fold0,0.0,5.19,,,,0.97135,,,0.96746,,
+20260927_200947_gbdt_leaves511,2026-09-27 20:09,matching,stage-2 variant leaves511 (400k S1),fold0,0.0,5.19,,,,0.97134,,,0.96774,,
+20260927_201129_gbdt_leaves127,2026-09-27 20:11,matching,stage-2 variant leaves127 (400k S1),fold0,0.0,5.19,,,,0.97134,,,0.96742,,
+20260927_201256_gbdt_mdl300,2026-09-27 20:12,matching,stage-2 variant mdl300 (400k S1),fold0,0.0,5.19,,,,0.97128,,,0.96778,,
+20260927_201441_gbdt_ff06,2026-09-27 20:14,matching,stage-2 variant ff06 (400k S1),fold0,0.0,5.19,,,,0.97135,,,0.96794,,
+20260927_201629_gbdt_l2_5,2026-09-27 20:16,matching,stage-2 variant l2_5 (400k S1),fold0,0.0,5.19,,,,0.97139,,,0.9677,,
+20260927_202420_gbdt_catboost,2026-09-27 20:24,matching,stage-2 variant catboost (400k S1),fold0,0.0,5.77,,,,0.97115,,,0.9677,,
+20260927_203605_matcher_v2,2026-09-27 20:36,matching,two-stage LightGBM + context features,fold0,0.1,8.8,,,,0.97212,0.99255,0.9413,0.9594,,
+20260927_203624_s2_full_lgb_l2_5,2026-09-27 20:36,matching,s2 full lgb l2 5,fold0,0.0,0.02,,,,0.97218,,,,tie with production l2=1 (0.97217); keep l2=1,tie with production l2=1 (0.97217); keep l2=1
+20260927_203624_s2_full_blend_lgb07_cat03,2026-09-27 20:36,matching,s2 full blend lgb07 cat03,fold0,0.0,0.02,,,,0.97204,,,,reject,reject: -0.00013 vs production at 1.2M S1 (400k screen showed +0.00011)
