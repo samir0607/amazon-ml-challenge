@@ -1,74 +1,218 @@
-# ML Challenge 2026: Business Entity Resolution Solution Template
+# ML Challenge 2026: Business Entity Resolution Solution
 
-**Team Name:** [Your Team Name]  
-**Team Members:** [List all team members]  
+**Team Name:** [Your Team Name]
+**Team Members:** [List all team members]
 **Submission Date:** [Date]
 
 ---
 
 ## 1. Executive Summary
-*Provide a brief 2-3 sentence overview of your approach and key innovations.*
+
+We use a blocking-plus-two-stage-GBDT pipeline built entirely on the provided data.
+
+- **Key innovation:** *reverse* blocking. Every S2/S3 record retrieves its best S1 entities, which exploits the fact that each record belongs to at most one S1. Its top-1 alone captures 94.6% of true pairs at 4.7 candidates per S1.
+- **Precision:** a stage-2 matcher uses competition features (how strongly each S1 beats the other S1s competing for the same record) and sibling-consistency features. A per-entity expected-F0.5 decision rule treats "no match" as a first-class outcome.
+- **Result:** held-out macro F0.5 of **0.9721**, with **12 candidates per S1** at **98.2% candidate recall**.
 
 ---
 
 ## 2. Methodology
 
 ### 2.1 Problem Analysis
-*Key insights discovered during EDA — noise patterns, address variations, missing fields, etc.*
+
+Measured on the training data:
+
+- **Structure:**
+  - 2.21M S1, 5.03M S2 and 5.29M S3 records
+  - 5.6% of S1 are singletons; the mean is 3.46 matches per S1 (maximum 11)
+  - every S2/S3 record matches at most one S1, and 26% match none
+  - the country label agrees on 100% of true pairs
+  - test adds France (15% of test S1), unseen in training
+- **Name noise:**
+  - word shuffles and doubled words
+  - character and leet typos (`Denta1`, `Si1ver`)
+  - diacritics and legal-suffix swaps (Pvt/Private, Ltd/Limited, L.L.C.)
+  - prefixes/suffixes such as `--`, `Sri` and `Center`
+  - DBA constructions (`X trading as Y`, `formerly:`)
+  - domain-style names (`magnatraders.com`)
+  - randomly replaced names
+  - Indic-script names (15% of S2 names): Devanagari, Tamil, Kannada, Telugu, Malayalam, Bengali, Gujarati
+- **Address noise:**
+  - uppercase and abbreviations (RD/ST/CT)
+  - component reordering
+  - state code vs full name vs native script
+  - injected wrong city
+  - partial addresses; 3.3% of S2/S3 addresses are missing
+- **Generic names.** Many distinct businesses share generic names, so name-only retrieval reaches only 68% recall even at 50 candidates. The address is essential for disambiguation.
 
 ### 2.2 Solution Strategy
-*Outline your high-level approach.*
 
-**Approach Type:** [Blocking + Classifier / End-to-End / Graph-Based / Hybrid, etc]  
-**Core Innovation:** [Brief description of your main technical contribution]
+**Approach Type:** Blocking + two-stage GBDT classifier with graph-style context features (hybrid)
+
+**Core Innovation:** Our three main contributions:
+
+1. **Reverse (target → S1) TF-IDF retrieval** combined with forward retrieval and a learned pruner.
+2. **Exclusivity-aware competition features and sibling-consistency features** from out-of-fold stage-1 scores.
+3. **A per-S1 expected-F0.5 decision rule.** It explicitly scores the empty prediction, which protects singletons.
 
 ---
 
 ## 3. Candidate Generation (Blocking)
-*Describe how you reduced the comparison space to a manageable candidate set.*
 
-- **Blocking keys used:** [e.g., PIN code, phonetic name encoding, TF-IDF, etc.]
-- **Candidate pairs generated:** [total]
-- **How you ensured true matches were not lost:**
+**Normalization (deterministic; raw text is kept alongside):**
+- **Names:**
+  - NFKD/ASCII folding
+  - legal-form canonicalization, including transliterated forms matched by phonetic skeleton (`praaivett` → private)
+  - core name with legal forms and fillers removed
+  - sorted token set
+  - consonant skeleton that bridges transliteration and typos
+  - DBA/alias split
+  - dictionary word-segmentation of domain names, with a vocabulary built only from S1 names
+- **Addresses:**
+  - abbreviation expansion (generic, plus rules scoped to the France country label)
+  - US/India region canonicalization, including native-script state names via skeleton
+  - number, postal-like and region tokens
+
+**Blocking keys used:** country-scoped sparse TF-IDF over word tokens with IDF weighting.
+
+| Blocker | Direction | Text | Top-k |
+|---|---|---|---|
+| Reverse name+address | target → S1 | core name tokens + skeleton tokens + address tokens | 5 |
+| Reverse address | target → S1 | address tokens | 3 |
+| Reverse name | target → S1 | name + skeleton tokens | 3 |
+| Forward name+address | S1 → target | core name tokens + skeleton tokens + address tokens | 30 |
+| Forward address | S1 → target | address tokens | 10 |
+
+- **Pruning:** the union (about 60 candidates per S1, 98.56% recall) is pruned by a LightGBM ranker on retrieval features. Those features are:
+  - per-blocker scores and ranks
+  - number of blockers that retrieved the pair
+  - the target's global best and second-best S1 score
+  - gap to the S1's best candidate
+- **Final set:** top-12 per S1.
+- **Rejected blockers:** exact-key blockers were measured and dropped (at most +0.0001 recall). Char-n-gram retrieval over all queries was too slow for too little gain.
+
+**Candidate pairs generated:**
+- test: **20,790,520** (exactly 12 per S1 for 1,732,544 S1; reduction ratio > 99.9998%)
+- train: 26.5M (12 per S1)
+
+**How we ensured true matches were not lost:**
+- Every blocker and every union/pruning depth was measured for pair recall, S1 full coverage, mean/p95/max candidates and per-source recall.
+- Leave-one-out ablations confirmed each kept blocker's contribution.
+- The pruning depth was chosen at the knee of the curve: top-10 gives 98.02%, **top-12 gives 98.19%**, and top-20 gives 98.44%.
+- Recall is equal for S2 and S3 (98.16% each). Fold-0 recall is **98.16%**.
 
 ---
 
 ## 4. Matching Model
 
 **Features used:**
-- Name features: [e.g., Jaccard, Levenshtein, phonetic encoding]
-- Address features: [e.g., token overlap, edit distance, PIN code matching]
-- Other: []
+- **Name features:**
+  - equality of core, sorted-token and skeleton forms
+  - RapidFuzz ratio, token-sort, token-set and partial ratio
+  - Jaro-Winkler; Levenshtein on the space-free core
+  - skeleton token-set/ratio (transliteration)
+  - token Jaccard and skeleton Jaccard
+  - IDF-weighted overlap (min-normalized, union-normalized, max shared IDF, IDF mass per side)
+  - alias token-set match; domain partial match
+  - length ratio and token-count difference
+  - non-Latin-script flag
+  - generic-name frequency (targets and S1 sharing the sorted core name)
+- **Address features:**
+  - ratio, token-set and partial ratio
+  - token Jaccard; IDF-weighted overlap and rarest shared token
+  - number Jaccard, shared count, first-number (house number) equality, number conflict
+  - postal-code equality/conflict and region equality/conflict
+  - missingness per side, length ratio, non-Latin flag
+- **Other:**
+  - cross features: min, max and product of name and address similarity
+  - retrieval features: per-blocker scores and ranks, blocker count, pruner probability and rank
+  - source indicator
+  - **stage-2 competition context** from out-of-fold stage-1 probabilities:
+    - rank and gap within the S1's candidates
+    - rank, gap and margin against the best *other* S1 for the same target (exclusivity)
+    - set-level expected match count and number of candidates above 0.5 / 0.2
+  - **sibling consistency:** similarity of the target to the S1's other plausible records (S2↔S3 and within-source), weighted by their probability
 
-**Model type:** [e.g., XGBoost, Siamese Network, Transformer, etc.]  
-**Threshold selection method:** [e.g., F_0.5 optimization on validation set]
+**Model type:** Two-stage LightGBM (binary log-loss).
+- **Stage 1:** 5-fold cross-fitted, 600k S1 per fold model, 71 features.
+- **Stage 2:** 90 features, trained on 1.2M S1 with 25% sampling of easy negatives and importance weights.
+- **Negatives:** hard negatives come from the candidate set itself (retrieved lookalikes: same brand in another location, same address, generic names, sibling entities).
+- **Test-time stage 1:** the average of the 5 fold models.
+
+**Threshold selection method:**
+1. **Exclusivity:** each target keeps only its best S1.
+2. **Per-S1 expected-F0.5 subset selection:** candidates are sorted by probability, and the prefix k maximizing plug-in expected F0.5 is chosen. The empty set is scored by Π(1−p).
+3. **Minimum top-candidate probability of 0.6**, with an expected 0.2 matches missed by blocking.
+
+These parameters were tuned on half of the validation fold and confirmed on the other half. The rule beat fixed thresholds from 0.3 to 0.8.
 
 ---
 
 ## 5. Results & Error Analysis
 
-- **F_0.5 Score (macro):** [your best validation score]
-- **Common false positives (wrong merges):** [brief description]
-- **Common false negatives (missed matches):** [brief description]
+**F_0.5 Score (macro):** **0.97205** on a held-out validation fold of 441,365 S1 entities (grouped split, full target index).
+
+| Metric | Value |
+|---|---|
+| Micro precision | 0.9926 |
+| Micro recall | 0.9415 |
+| Singleton F0.5 | 0.969 |
+
+Progression:
+
+| Model | Macro F0.5 |
+|---|---|
+| Stage-1 only | 0.9649 |
+| + competition context | 0.9669 |
+| + set features | 0.9685 |
+| + sibling features | 0.9702 |
+| + more data (final) | 0.9721 |
+
+**Common false positives (wrong merges):**
+- same name and street with a conflicting building number
+- near-duplicate sibling entities
+- generic-name collisions
+- same address, different business
+- name-only matches where the target address is missing
+
+Singleton false matches affect 3.1% of true singletons.
+
+**Common false negatives (missed matches):**
+- about 28k true pairs are never retrieved; 41% of those have non-Latin names and 33% missing addresses
+- moderate-evidence pairs below the precision gate
+- missing target address with a generic name (inherently ambiguous)
+- transliteration and alias/replaced names
 
 ---
 
 ## 6. Conclusion
-*Summarize your approach, key achievements, and lessons learned in 2-3 sentences.*
+
+Treating exclusivity as signal made the biggest difference: in reverse blocking, in the per-target competition features, and in the decision rule. Together they delivered high precision (0.993 micro) at 12 candidates per S1. Macro F0.5 rewards getting each entity's whole set right, so modelling "no match" explicitly and adding set-level and sibling context mattered more than extra string features.
 
 ---
 
 ## Appendix
 
 ### A. Code Artefacts
-*Your complete, runnable code ships in the submission zip under
-`code/business_entity_resolution/` (all source in `src/`, with a `README.md` and
-`requirements.txt`). Summarise its structure and the entry point(s) to reproduce
-`output/matching_results.tsv` and `output/candidate_pairs.tsv` here.*
+
+Located in `code/business_entity_resolution/`:
+
+- `src/ber/`: library modules (see `README.md`)
+- `scripts/`: entry points
+- `requirements.txt`: pinned versions
+- `run_all.sh`: one command that regenerates both output files and runs the validator
+
+The pipeline stages are:
+
+1. `run_blockers.py` for train and test
+2. `train_matcher.py --final`
+3. `predict_test.py`
+
+Every stage is cached. The pipeline makes no external calls. LightGBM (MIT), rapidfuzz (MIT) and scikit-learn (BSD) are the modelling libraries; no pretrained model is used in the final submission.
 
 ### B. Additional Results
-*Include any additional charts, graphs, or detailed results.*
 
----
-
-**Note:** Teams can modify sections according to their approach while maintaining clarity and technical depth.
+- `reports/final_report.md`: full blocking and matcher tables, ablations, singleton/source analysis, loss decomposition
+- `reports/candidate_analysis.csv`, `reports/ablation_results.csv`: all logged experiments
+- `reports/error_analysis.csv` and `reports/error_analysis.html`: categorized FP/FN with examples
+- `experiments/experiment_log.csv`: every run
