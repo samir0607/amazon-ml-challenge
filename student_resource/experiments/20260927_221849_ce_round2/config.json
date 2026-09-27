@@ -1,0 +1,10 @@
+{
+  "n_train": 100000,
+  "lr": 2e-05,
+  "lo": 0.02,
+  "hi": 0.995,
+  "val": "val_pred_cascade_tau0.01.parquet",
+  "test": "test_scores_v2_top12.parquet",
+  "stage": "val",
+  "_platform": "macOS-26.5.2-arm64-arm-64bit"
+}

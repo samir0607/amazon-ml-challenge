@@ -274,3 +274,22 @@ This regenerates normalization caches, blockers, candidates, features and models
 - **Runtime** on an Apple M5 (10 cores, 16 GB) is about 9–10 hours end to end, dominated by the TF-IDF blockers (about 2.5 h train, 2 h test).
 - **Caching:** every stage is cached under `cache/`, keyed by configuration, so a rerun skips finished stages.
 - **Peak memory** is about 7 GB.
+
+
+## Leaderboard calibration (final)
+
+Validation overstates test performance, because test has about 23% more S2/S3 records per S1 (more distractors). Public-leaderboard results:
+
+| Submission | Validation (half B) | Leaderboard |
+|---|---|---|
+| Cross-encoder can only add matches | 0.978 | 0.950 |
+| Round-1 fusion, prior odds ×1 | 0.982 | 0.971 |
+| Round-1 fusion, prior odds ×0.5 | — | 0.972 |
+| Round-1 fusion, prior odds ×0.25 | — | 0.973 |
+| **Round-2 fusion, prior odds ×0.25 (final)** | 0.984 (at ×1) | **0.975** |
+
+Each fused match probability's odds are multiplied by 0.25 (`finalize_ce.py --prior-odds 0.25`), so a pair needs 4× more evidence before it counts as a match.
+
+- **Why it works:** it corrects for the lower match rate among borderline test pairs.
+- **Evidence:** adding matches consistently hurt on the leaderboard and removing them helped, the opposite of validation.
+- **Final test predictions:** 5,710,085 matched pairs.

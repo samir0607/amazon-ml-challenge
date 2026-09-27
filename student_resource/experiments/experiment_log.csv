@@ -72,3 +72,4 @@ exp_id,timestamp,stage,description,tier,runtime_s,peak_rss_gb,pair_recall,cand_m
 20260927_203624_s2_full_blend_lgb07_cat03,2026-09-27 20:36,matching,s2 full blend lgb07 cat03,fold0,0.0,0.02,,,,0.97204,,,,reject,reject: -0.00013 vs production at 1.2M S1 (400k screen showed +0.00011)
 20260927_212344_ce_lite_fusion,2026-09-27 21:23,matching,e5-small cross-encoder on borderline pairs + LR fusion (half-B holdout),fold0-halfB,0.0,4.63,,,,0.98199,,,0.98004,keep,
 20260927_215349_ce_band_hi0.995,2026-09-27 21:53,matching,cross-encoder band extended to 0.995,fold0-halfB,0.0,4.82,,,,0.98218,,,0.98084,keep,
+20260927_221849_ce_round2,2026-09-27 22:18,matching,cross-encoder round 2 (+100k pairs) fused with round 1,fold0-halfB,0.0,4.37,,,,0.98361,,,0.98511,keep,
