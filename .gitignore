@@ -12,3 +12,4 @@ student_resource/*.zip
 student_resource/experiments/logs_*.txt
 student_resource/experiments/submissions/
 student_resource/dataset/**/*.tsv
+student_resource/catboost_info/
