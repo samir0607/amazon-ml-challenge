@@ -1,0 +1,7 @@
+{
+  "blocker": "tfidf_reverse+forward",
+  "config": "nameaddr_word",
+  "k_rev": 3,
+  "k_fwd": 0,
+  "_platform": "macOS-26.5.2-arm64-arm-64bit"
+}

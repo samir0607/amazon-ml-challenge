@@ -1,0 +1,119 @@
+<html><head><meta charset='utf-8'><title>Error analysis</title><style>body{font-family:sans-serif;margin:24px}table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #ccc;padding:4px 6px;vertical-align:top}th{background:#f3f3f3}</style></head><body><h1>Validation error analysis (fold 0)</h1>
+<h2>Loss decomposition (share of 1 - macro F0.5)</h2><table><tr><th>S1 error type</th><th>#S1</th><th>loss</th><th>of which blocking ceiling</th></tr>
+<tr><td>TOTAL</td><td>441,365</td><td>0.02795</td><td>0.00593</td></tr>
+<tr><td>singleton_false_match</td><td>768</td><td>0.00174</td><td>0.00000</td></tr>
+<tr><td>nonsingleton_predicted_empty</td><td>3,104</td><td>0.00703</td><td>0.00148</td></tr>
+<tr><td>nonsingleton_with_fp</td><td>9,630</td><td>0.00595</td><td>0.00016</td></tr>
+<tr><td>nonsingleton_fn_only</td><td>69,290</td><td>0.01322</td><td>0.00428</td></tr>
+</table><h2>Pair error categories</h2><table><tr><th>category</th><th>#pairs</th><th>#S1</th><th>mean p</th></tr>
+<tr><td>FN: candidate blocker failure (not in top-12)</td><td>28,085</td><td>23,861</td><td></td></tr>
+<tr><td>FN: threshold/competition (moderate evidence)</td><td>27,851</td><td>25,518</td><td>0.407</td></tr>
+<tr><td>FN: missing target address</td><td>22,899</td><td>21,834</td><td>0.231</td></tr>
+<tr><td>FN: transliteration (non-Latin name)</td><td>6,081</td><td>5,889</td><td>0.349</td></tr>
+<tr><td>FN: DBA/alias or replaced name</td><td>4,115</td><td>4,071</td><td>0.328</td></tr>
+<tr><td>FP: same name+street, number conflict</td><td>2,504</td><td>2,497</td><td>0.834</td></tr>
+<tr><td>FP: near-duplicate record (likely sibling entity)</td><td>2,387</td><td>2,383</td><td>0.888</td></tr>
+<tr><td>FP: weak evidence both fields</td><td>2,351</td><td>2,332</td><td>0.857</td></tr>
+<tr><td>FP: generic name collision</td><td>1,237</td><td>1,208</td><td>0.882</td></tr>
+<tr><td>FP: same address, different business</td><td>641</td><td>630</td><td>0.863</td></tr>
+<tr><td>FP: same name, target address missing</td><td>608</td><td>595</td><td>0.864</td></tr>
+<tr><td>FP singleton false match: near-duplicate record (likely sibling entity)</td><td>258</td><td>237</td><td>0.823</td></tr>
+<tr><td>FP singleton false match: same name+street, number conflict</td><td>246</td><td>211</td><td>0.750</td></tr>
+<tr><td>FP singleton false match: weak evidence both fields</td><td>209</td><td>195</td><td>0.797</td></tr>
+<tr><td>FN: domain-style name</td><td>192</td><td>192</td><td>0.316</td></tr>
+<tr><td>FN: address heavily corrupted/partial</td><td>174</td><td>159</td><td>0.307</td></tr>
+<tr><td>FP singleton false match: generic name collision</td><td>136</td><td>115</td><td>0.807</td></tr>
+<tr><td>FP singleton false match: same address, different business</td><td>50</td><td>46</td><td>0.764</td></tr>
+<tr><td>FP singleton false match: same name, target address missing</td><td>36</td><td>31</td><td>0.780</td></tr>
+<tr><td>FP: same brand, different location</td><td>35</td><td>32</td><td>0.827</td></tr>
+<tr><td>FN: both fields heavily corrupted</td><td>10</td><td>10</td><td>0.210</td></tr>
+<tr><td>FP singleton false match: same brand, different location</td><td>2</td><td>2</td><td>0.802</td></tr>
+</table><h2>Examples</h2>
+<h3>FN: threshold/competition (moderate evidence)</h3><table><tr><th>S1 name</th><th>S1 address</th><th>target name</th><th>target address</th><th>p</th></tr>
+<tr><td>Kalinga Seva Samiti</td><td>C/O. Kashinath Satlingappa Wangaje, Mataji Nagar, Latur, Latur, Maharashtra</td><td>M/s Kalinga Seva Service</td><td>C/O. KASHINATH SATLINGAPPA WANGAJE, MATAJI NAGAR, LATUR 7, LATUR, महाराष्ट्र</td><td>0.516</td></tr>
+<tr><td>Powell & Mccourt Spdr</td><td>Staten Island, 9 Penn Avenue, NY</td><td>POWELL & MSHRRT SPDR</td><td>9 PENN AVE, STATEN ISLAND, NY</td><td>0.609</td></tr>
+<tr><td>Sterling Choice Agricultural LLC</td><td>7501 Wild Cat Kno Road, Tolar, TX</td><td>Sterling LLC Agricultural Choice</td><td>7397 WILD CAT KNO RD, TOLR, TX</td><td>0.606</td></tr>
+<tr><td>Dailey Allied Auto</td><td>520 N Street, Unit S230, Washington, DC</td><td>Dailey Allied  Auto</td><td>PO BOX 5418, WASHINGTON, 520-524 N STREET, DC</td><td>0.356</td></tr>
+<tr><td>Elite Clinic</td><td>No. 70, Balan Nagar, Bharatiar Street, Coimbatore North, Coimbatore, Tamil Nadu</td><td>Mr *** Elite (Services)</td><td>Door No 70, N/A, Coimbatore North, Coimbatore, தமிழ்நாடு</td><td>0.739</td></tr>
+<tr><td>Murphy, Brown and Renna Investment LLC</td><td>Point Pleasant, WV, 2226 Jackson Avenue</td><td>MURPHY, BROWN AND RENNA INVESTMENT LLC</td><td>2273 JCAKSON AVENUE, POINT PLEASANT, WV</td><td>0.468</td></tr>
+</table>
+<h3>FN: missing target address</h3><table><tr><th>S1 name</th><th>S1 address</th><th>target name</th><th>target address</th><th>p</th></tr>
+<tr><td>Cleopatra Clark Modern Metro</td><td>288 Paddock Cir, IA, Iowa City</td><td>Cleopatra Cmak Modern Metro</td><td></td><td>0.557</td></tr>
+<tr><td>Serilingampally Marketing Private Limited</td><td>Flat No 602 Plot No 56, Green Hamlet, Serilingampally, Hyderabad, Telangana</td><td>Serilingampally Marketing Pirvcte Limited</td><td></td><td>0.148</td></tr>
+<tr><td>Christ Synagogue</td><td>NC, 122 Village Green Lane, Mooresville, Unit 210</td><td>Christ-Synagogue</td><td></td><td>0.023</td></tr>
+<tr><td>Shyam Healthcare</td><td>Haribhakti Wadilakkadpitha Road, Baroda, Vadodara, Gujarat</td><td>Dr Shyam Healthcare Ltd</td><td></td><td>0.043</td></tr>
+<tr><td>Baba Consultants LLP</td><td>Mumbai, 104 Creative Industries Premises Sunder Nagar Kalina Santacruz (East), Mumbai City, Maharashtra</td><td>Baba Consultants & Co</td><td></td><td>0.007</td></tr>
+<tr><td>Pediatric Beacon Health LLC</td><td>102 Jingles Lane, Johnson City, TN</td><td>Pediatric Beacon Health Llc</td><td></td><td>0.255</td></tr>
+</table>
+<h3>FN: transliteration (non-Latin name)</h3><table><tr><th>S1 name</th><th>S1 address</th><th>target name</th><th>target address</th><th>p</th></tr>
+<tr><td>Dream Consultancy Private Limited</td><td>Idukki, 3/550, Kerala, Thyparambil Building Ayyappancoin P.O, Mattukkatta, Idukki</td><td>ഡ്രീം കൺസൾട്ടൻസി പ്രൈവറ്റ് ലിമിറ്റഡ്</td><td>03/550, IDUKKI, THIRUVANANTHAPURAM, കേരളം</td><td>0.304</td></tr>
+<tr><td>Webber & Stach LLC</td><td>16232 Navigator Avenue, Chino, CA</td><td>Webber & Stách</td><td>16245 1/2 NAVIGATOR AVENUE, CHINO, CA</td><td>0.148</td></tr>
+<tr><td>Shree Food Pvt Ltd</td><td>West Bengal, 83/85 N S Road, Howrah, Kolkata, 1St Floor, Back Side Stair Punjab Sind Bank, Kolkata</td><td>*** Shree Fóod Pvt Ltd</td><td>N S ROAD, KOLKATA, West Bengal</td><td>0.424</td></tr>
+<tr><td>Vivek Trade LLP</td><td>398-D, Kalbadevi Road, Mumbai, Maharashtra</td><td>Vivek Tráde LLP</td><td></td><td>0.254</td></tr>
+<tr><td>Urban White Food Private Limited</td><td>4/543, Anjumoorthy Mangalam, Alathur, Palakkad, Kerala</td><td>അർബൻ വൈറ്റ് ഫുഡ് പ്രൈവറ്റ് ലിമിറ്റഡ്</td><td>4/543, ANJUMOORTHY MANGALAM, ALATHUR, PALAKKAD, Kerala</td><td>0.622</td></tr>
+<tr><td>Bombay Green Software</td><td>M41, Dew Block, Arihant, Escapade, Devraj Nagar, Kanchipuram, Tamil Nadu</td><td>பம்பாய் கிரீன் சாஃப்ட்வேர்</td><td>H.NO 308 M41, KANCHIPURAM, Tamil Nadu</td><td>0.583</td></tr>
+</table>
+<h3>FN: DBA/alias or replaced name</h3><table><tr><th>S1 name</th><th>S1 address</th><th>target name</th><th>target address</th><th>p</th></tr>
+<tr><td>CUH Citigroup PLLC</td><td>304 Carter Street, Unit B, Liberty, NC</td><td>Veopyraevo</td><td>04 CARTER ST, LIBERTY TOWSNHIP, NC</td><td>0.030</td></tr>
+<tr><td>Surgical Clear Partners LLC</td><td>28 Furlong Street, Rochester, NY</td><td>Vantagesoldrex</td><td>FURLONG STREET, ROCHESTER, NY</td><td>0.089</td></tr>
+<tr><td>Neminath Charitable Trust</td><td>Sr No. 20/4B 20/4K, Plot No. 14 To 16/1, Sayali Sanskruti Bhistbag, Ahmednagar, Ahmed Nagar, Maharashtra</td><td>Caloarczeta</td><td>AHMEDNAGAR, AHMED NAGAR, SR NO. 20/4B 20/4K, Maharashtra</td><td>0.707</td></tr>
+<tr><td>Lara Animal Hospital</td><td>Karnes City, TX, 116 123</td><td>Arcectobe1o</td><td>123, KARNES CITY, TX</td><td>0.535</td></tr>
+<tr><td>DM Properties Private Limited</td><td>G-13-14-15, Bhanot Bhawan Azadpur, New Delhi, Delhi</td><td>Iricalo</td><td>G-13-14-15, Bhanot Bhawan Azadpur, New Delhi, Delhi</td><td>0.318</td></tr>
+<tr><td>Carrico Health Center</td><td>4160 Gershwin Avenue, Unit Suite 317, Oakdale, MN</td><td>Viocira</td><td>MN, GERSHWIN AVENUE, OAKDALE</td><td>0.060</td></tr>
+</table>
+<h3>FP: same name+street, number conflict</h3><table><tr><th>S1 name</th><th>S1 address</th><th>target name</th><th>target address</th><th>p</th></tr>
+<tr><td>WXK Sachem Inc</td><td>MA, Methuen, 602 Prospect Street</td><td>WXK  Sachem Co</td><td>606 PROSPECT ST, METHUEN CIITY, MA</td><td>0.880</td></tr>
+<tr><td>B 4 G Construction LLC</td><td>1712 Hicks Drive, Fairfax County, VA</td><td>B 4 G  Conserucion Ltd</td><td>1723 HICKS DR, FAIRFAX COUNTY, VA</td><td>0.666</td></tr>
+<tr><td>Advance Venkatesh</td><td>C-701, Sarita Vihar, New Delhi, South Delhi, Delhi</td><td>Advance Venkatesh Limited</td><td>C-703, SARITA VIHAR, NEW DELHI, Delhi</td><td>0.824</td></tr>
+<tr><td>Rapid Marketing Works LLC</td><td>13385 Ensign Point Lane, Unit 15102, Draper City (sl Co), UT</td><td>Rapid Marketing Works Inc</td><td>1338 ENSIGN POINT LANE, DRAPER, UT</td><td>0.957</td></tr>
+<tr><td>Ridgeline Fortunex Center</td><td>3221 Ely Place, Unit 8, Washington, DC</td><td>RIDGELINE FÓRTUNEX CENTER (LTD)</td><td>3242 ELY PL, WASHINGTON, DC</td><td>0.798</td></tr>
+<tr><td>Smith Karman LLC</td><td>863 Cedar Way, Unit 602, Youngstown, OH</td><td>Ltd Smith Karamn</td><td>864 CEDAR WAY, YOUNGSTOWN, OH</td><td>0.746</td></tr>
+</table>
+<h3>FP: near-duplicate record (likely sibling entity)</h3><table><tr><th>S1 name</th><th>S1 address</th><th>target name</th><th>target address</th><th>p</th></tr>
+<tr><td>Jain Indo Care Pvt Ltd</td><td>1St Floor National India Bldg278 V B Gandhi Marg Kalagoda Fort, Mumbai, Mumbai City, Maharashtra</td><td>जैन इंडो केयर लिमिटेड</td><td>ST FLOOR NATIONAL INDIA BLDG278 V B GANDHI MARG KALAGODA FORT, MUMBAI CITY, Maharashtra</td><td>0.793</td></tr>
+<tr><td>West Chemical</td><td>312 Pheasant Drive, Fl 1, Lexington, NC</td><td>West Chemical Corp</td><td>312 PHEASANT DR, LEXINGTON, NC</td><td>1.000</td></tr>
+<tr><td>Bangalore Defence Limited</td><td>No.3, 18Th Cross, 33Rd Main, 6Th Phase Jp Nagar, Bangalore, Karnataka</td><td>Bangalore Defence LLP</td><td>DOOR NO 10 , 18TH CROSS, 33RD MAIN, 6TH PHASE JP NAGAR, BANGALORE, Karnataka</td><td>0.891</td></tr>
+<tr><td>Thomas Delta Quantumsphere LP</td><td>5100 35, Georgetown, TX</td><td>Thomas Ltd Quantumsphere Delta</td><td>5102 35, GEORGETOWN, TX</td><td>0.683</td></tr>
+<tr><td>Merrily L. Bowen, DO</td><td>26066 Nagel Road, Defiance, OH</td><td>MDO L. Bowen, Merrily</td><td>##26066 NAGEL ROAD, DEFIANCE, OH</td><td>0.911</td></tr>
+<tr><td>Enterprises Sansid Mechatronics Private Limited</td><td>No. 332, First Floor, 17Th Main Road 5Th Block, Khb Colony, Koramangala, Bengaluru, Bangalore, Karnataka</td><td>Enterprises Sansid Mechatronics Limited</td><td>NO. 337, FIRST FLOOR, 17TH MAIN ROAD 5TH BLOCK, KHB COLONY, KORAMANGALA, BENGALURU, Karnataka</td><td>0.842</td></tr>
+</table>
+<h3>FP: weak evidence both fields</h3><table><tr><th>S1 name</th><th>S1 address</th><th>target name</th><th>target address</th><th>p</th></tr>
+<tr><td>Unified Costamare</td><td>1815 Boomer Road, Unit # EM-C3, Stillwater, OK</td><td>Unified Cs0dtmaaer Corp</td><td>1828- BOOMER RD, null, STILLWATER TOWNSHIP, OK</td><td>0.776</td></tr>
+<tr><td>Robles For LLC</td><td>800 Salem Drive, Unit 400, Owensboro, KY</td><td>ROBLES FOR INC</td><td>KY, 803 SALM DR, OEWNSBORO</td><td>0.734</td></tr>
+<tr><td>Busick Laboratories Inc.</td><td>19153 Townline Lima Road, Wapakoneta, OH</td><td>BUSICK LATMOFRATOIES CO</td><td>1915 TOWNLINE LIMA ROAD, WAPAKONETA, OH</td><td>0.763</td></tr>
+<tr><td>Nettie Teagle Eaton</td><td>7010 Meyer Loop, Clarksville, IN</td><td>Monette Teagle  Eaton</td><td>7010C MEYER LOOP, SELLERSBURG, IN</td><td>0.998</td></tr>
+<tr><td>Gangesh Service Limited</td><td>357, Kalba Devi Road, Mumbai, Maharashtra</td><td>Gangosh Sersvlce Limited</td><td>Kalba Devi Road, MH, Plot 183 357, Mumbai</td><td>0.818</td></tr>
+<tr><td>Singh & Co</td><td>171/2 Picnic Garden Road, Kolkata, Howrah, West Bengal</td><td>SENHCGH & CÓ LLP</td><td>171/ PICNIC GARDEN ROAD, KOLKATA, HOWRAH, পশ্চিমবঙ্গ</td><td>0.996</td></tr>
+</table>
+<h3>FP: generic name collision</h3><table><tr><th>S1 name</th><th>S1 address</th><th>target name</th><th>target address</th><th>p</th></tr>
+<tr><td>Abacus Re Limited</td><td>Plot No-14, Ground Floor, Cts No 15847/3 Dnyaneshwar Nagar, Chanakyapuri, Garkheda, Aurangabad, Maharashtra</td><td>Abacus Re Pvt Ltd</td><td>PLOT NO-16, GROUND FLOOR, CTS NO 15847/3 DNYANESHWAR NAGAR, CHANAKYAPURI, GARKHEDA, AURANGABAD, Maharashtra</td><td>0.949</td></tr>
+<tr><td>Pediatric Dental Health</td><td>110 Carlson Avenue, East Peoria, IL</td><td>Pediatric Delnasl Health Inc Inc</td><td>#131 CARLSON AVE, WSAHINGTON CITY, IL</td><td>0.768</td></tr>
+<tr><td>Sun Investment LLP</td><td>C/O Om Prakash, 360, Dhawa, Merta City, Merta, Nagaur, Rajasthan</td><td>सन इन्वेस्टमेंट होटल एलएलपी</td><td>#077 C/O OM PRAKASH, 360, DHAWA, MERTA CITY, MERTA, NAGAUR, Rajasthan</td><td>0.959</td></tr>
+<tr><td>Jai Management Private Limited</td><td>15-2-704, 2Nd Floor, India Trade Center Siddiambar Bazar, Hyderabad, Telangana</td><td>జై మేనేజ్‌మెంట్ ప్రైవేట్ లిమిటెడ్</td><td>15-B, HYDERABAD, Telangana</td><td>0.989</td></tr>
+<tr><td>Global Care Ltd</td><td>10-4-64, Plot No.64, Donbosco Nagar, St. Michale Colony, Bandlaguda Jagir, Hyderabad, Rangareddy, Telangana</td><td>M/s Global Care Private Limited</td><td>10-4-75, Plot No.64, Donbosco Nagar, St. Michale Colony, Bandlaguda Jagir, Hyderabad, Rangareddy, Andhra Pradesh</td><td>0.810</td></tr>
+<tr><td>WE Shree Private Limited</td><td>H. No. 804, Ground Floor, Seqno-Gtv-1932, Flat No, B-1, Ghitorni, New Delhi, South West Delhi, Delhi</td><td>-- WAE SHREE PRIVATE  [LIMITED]</td><td>#807, GROUND FLOOR, SEQNO-GTV-1932, FLAT NO, B-1, GHITORNI, NEW DELHI, null, Delhi</td><td>0.881</td></tr>
+</table>
+<h3>FP: same address, different business</h3><table><tr><th>S1 name</th><th>S1 address</th><th>target name</th><th>target address</th><th>p</th></tr>
+<tr><td>Via Brothers Private Limited</td><td>A-19, Basement, Jangpura Extension, New Delhi, Central Delhi, Delhi</td><td>#servicessingh</td><td>M-19-A, BASEMENT, JANGPURA EXTENSION, NEW DELHI, दिल्ली</td><td>0.874</td></tr>
+<tr><td>Sm Putra Private Limited</td><td>305 Thakkar Plaza A, Iraniwadi Bldg 1 Kandivali ( West), Mumbai, Mumbai City, Maharashtra</td><td>Smt SYNCIRA</td><td>305 THAKKAR PLAZA A, MUMBAI, Maharashtra</td><td>0.721</td></tr>
+<tr><td>Schwarz Angel Associates</td><td>2793 Mallard Court, Imperial, MO</td><td>Mirafluxbrix</td><td>##2793 MALLARD CT, IMPERIAL, MO</td><td>0.809</td></tr>
+<tr><td>Sh Nursing Home</td><td>Plot No. 54, Room No. 14, 2Nd Floor, Shankar Kutir Chs, T V Chidambaran Road, Sion East, Mumbai, Maharashtra</td><td>Shri Venture Cine Pbidvate Limited</td><td>DOOR NO 54 , R. NO. 14, 2ND FLOOR, SHANKAR KUTIR, CHSL, TV CHIDAMBARAN ROAD, SION (E), MUMBAI, Maharashtra</td><td>0.777</td></tr>
+<tr><td>Janine's Liquor</td><td>CA, Upland, 896 8th Street</td><td>Gildevo</td><td>896 8st Street, Upland, California</td><td>0.767</td></tr>
+<tr><td>Munnar Plantations</td><td>B 1/B 2 Kapadia Apts39 S V Road Near Grindlays Bank Vile Parle West, Mumbai, Maharashtra</td><td>मॉडर्न पायोनियर एस्टेट लिमिटेड</td><td>#214 B 1/B 2 KAPADIA APTS39 S V RAOD NEAR GRINDLAYS BANK VILE PARLE WEST, MUMBAI, Maharashtra</td><td>0.933</td></tr>
+</table>
+<h3>FP: same name, target address missing</h3><table><tr><th>S1 name</th><th>S1 address</th><th>target name</th><th>target address</th><th>p</th></tr>
+<tr><td>Harbor Golden Australia, LLC</td><td>514 Forest Pointe Place, Nashville, TN</td><td>Harbor Golden Australia Inc</td><td></td><td>0.955</td></tr>
+<tr><td>Margulies Microelectronics Inc</td><td>162 State Highway 158, AR, Manila</td><td>Margulies Microelectronics</td><td></td><td>0.999</td></tr>
+<tr><td>Kieffer and Fox, LLC</td><td>306 Holland Road, Germantown Hills, IL</td><td>Kieffer and Fox, L.L.C.</td><td></td><td>0.737</td></tr>
+<tr><td>Orthopedic Fresh Partners Inc</td><td>508 Second Street, Albany, NY</td><td>ORTHOPEDIC FRESH PARTNERS P.C. ASSOCIATION</td><td></td><td>0.729</td></tr>
+<tr><td>Schenk and Moton</td><td>44 Robert Road, Manchester, CT</td><td>Schenk & Moton</td><td></td><td>0.981</td></tr>
+<tr><td>Gayla Lozano Strategic, LLC</td><td>105 Janwell Drive, Richmond, KY</td><td>Gayla Lozano Strategic</td><td></td><td>0.879</td></tr>
+</table>
+<h3>FP singleton false match: near-duplicate record (likely sibling entity)</h3><table><tr><th>S1 name</th><th>S1 address</th><th>target name</th><th>target address</th><th>p</th></tr>
+<tr><td>Ratandeep Traders Pvt. Ltd.</td><td>C/O Motilal Shaw, Gate 1, Mother Diary, Kusaighachi, Serampore, Hooghly, West Bengal</td><td>Shri Ratandeep Traders Limited</td><td>DOOR NO 33 C/O MOTILAL SHAW, GATE 1, MOTHER DIARY, KUSAIGHACHI, SERAMPORE, West Bengal</td><td>0.809</td></tr>
+<tr><td>Gautam & Sons Ltd</td><td>49 Gf-49 Gf Platinum, Homes Sanoli, Rajpura, Mohali, Punjab</td><td>Gautam & Sons Pvt Ltd</td><td>#70 GF-49 GF PLATINUM, HOMES SANOLI, RAJPURA, Punjab</td><td>0.805</td></tr>
+<tr><td>Stone Network Inc</td><td>111 19th Street, Arkadelphia, AR</td><td>Ltd Stone Network</td><td>115. 19TH ST, N/A, ARKADELPHIA, AR</td><td>0.486</td></tr>
+<tr><td>Adeep Works Limited</td><td>Gondia, Plot No 899, Near Bank Of Maharashtra, Maharashtra, C/O Omprakash Nathhulal Asati</td><td>Adeep Works Private Limited</td><td>NO 7-42 C/O OMPRAKASH NATHHULAL ASATI, PLOT NO 899, NEAR BANK OF MAHARASHTRA, GONDIA, महाराष्ट्र</td><td>0.725</td></tr>
+<tr><td>Akr Services Pvt Ltd</td><td>4, Kamal Kunj, Road No. 4, Jvpd Scheme, Vile Parle (West), Mumbai, Maharashtra</td><td>Akr-5ervices Limited</td><td>6/4, KAMAL KUNJ, ROAD NO. 4, JVPD SCHEME, VILE PARLE (WEST), Maharashtra</td><td>0.897</td></tr>
+<tr><td>Pavana College LLP</td><td>Plot No: 13, 14, 15, 16, 23, 24, 25, Flat No: 402 Serlingampally, Tara Nagar, Hyderabad, Rangareddy, Telangana</td><td>Pavana  College Limited</td><td>PLOT NO: 16, 14, 15, 16, 23, 24, 25, FLAT NO: 402 SERLINGAMPALLY, TARA NAGAR, HYDERABAD, తెలంగాణ</td><td>0.989</td></tr>
+</table></body></html>

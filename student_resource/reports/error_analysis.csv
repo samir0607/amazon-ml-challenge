@@ -1,0 +1,23 @@
+category,n_pairs,n_s1,mean_p,share_of_errors
+FN: candidate blocker failure (not in top-12),28085,23861,,
+FN: threshold/competition (moderate evidence),27851,25518,0.40662393,0.3867012857182528
+FN: missing target address,22899,21834,0.23109867,0.31794451695315323
+FN: transliteration (non-Latin name),6081,5889,0.34899902,0.0844325345033462
+FN: DBA/alias or replaced name,4115,4071,0.32761028,0.05713531976340563
+"FP: same name+street, number conflict",2504,2497,0.8343908,0.03476715448057538
+FP: near-duplicate record (likely sibling entity),2387,2383,0.8883004,0.03314265085668268
+FP: weak evidence both fields,2351,2332,0.85712534,0.03264280358779262
+FP: generic name collision,1237,1208,0.88166434,0.01717530754491683
+"FP: same address, different business",641,630,0.86301535,0.008900058315514704
+"FP: same name, target address missing",608,595,0.8637659,0.008441864985698815
+FP singleton false match: near-duplicate record (likely sibling entity),258,237,0.8233206,0.003582238760378773
+"FP singleton false match: same name+street, number conflict",246,211,0.7501379,0.0034156230040820862
+FP singleton false match: weak evidence both fields,209,195,0.79700756,0.0029018910888339677
+FN: domain-style name,192,192,0.3161809,0.002665852100746994
+FN: address heavily corrupted/partial,174,159,0.30661437,0.0024159284663019635
+FP singleton false match: generic name collision,136,115,0.80738467,0.0018883119046957874
+"FP singleton false match: same address, different business",50,46,0.7643007,0.000694232317902863
+"FP singleton false match: same name, target address missing",36,31,0.7795158,0.0004998472688900614
+"FP: same brand, different location",35,32,0.8267997,0.00048596262253200413
+FN: both fields heavily corrupted,10,10,0.21020013,0.00013884646358057262
+"FP singleton false match: same brand, different location",2,2,0.8022706,0.000027769292716114522

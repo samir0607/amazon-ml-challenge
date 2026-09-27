@@ -1,0 +1,22 @@
+category,n,mean_p
+FN: threshold/competition (moderate evidence),43589,0.39060688
+FN: missing target address,23548,0.23479766
+FN: transliteration (non-Latin name),8197,0.37088972
+FN: DBA/alias or replaced name,4809,0.34244516
+FP: near-duplicate record (likely sibling entity),3058,0.8905583
+"FP: same name+street, number conflict",2678,0.8429051
+FP: weak evidence both fields,2647,0.8674187
+FP: generic name collision,1556,0.87853545
+"FP: same address, different business",736,0.8609482
+"FP: same name, target address missing",516,0.8832891
+"FP singleton false match: same name+street, number conflict",503,0.6339055
+FP singleton false match: near-duplicate record (likely sibling entity),478,0.7226356
+FP singleton false match: weak evidence both fields,418,0.6716959
+FN: domain-style name,248,0.34953043
+FN: address heavily corrupted/partial,237,0.33322486
+FP singleton false match: generic name collision,222,0.7230278
+"FP singleton false match: same address, different business",113,0.6621004
+"FP singleton false match: same name, target address missing",86,0.5988248
+"FP: same brand, different location",24,0.8831752
+FN: both fields heavily corrupted,12,0.2626678
+"FP singleton false match: same brand, different location",5,0.6518396

@@ -1,0 +1,8 @@
+{
+  "blocker": "tfidf",
+  "field": "n_core",
+  "analyzer": "char_wb",
+  "ngram": "(3, 3)",
+  "k": 5,
+  "_platform": "macOS-26.5.2-arm64-arm-64bit"
+}

@@ -1,0 +1,6 @@
+{
+  "blocker": "exact",
+  "key": "name_sorted",
+  "max_block": 50,
+  "_platform": "macOS-26.5.2-arm64-arm-64bit"
+}

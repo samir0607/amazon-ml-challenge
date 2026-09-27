@@ -1,0 +1,10 @@
+{
+  "blocker": "tfidf",
+  "field": "nameaddr_word",
+  "analyzer": "word",
+  "ngram": "(1, 1)",
+  "max_df": "0.02",
+  "field_expr": "col(\"n_core\").str.concat_horizontal([col(\"n_skel\").str.replace_all([\"(\\S+)\", \"~$1\"]), col(\"a_norm\")])",
+  "k": 20,
+  "_platform": "macOS-26.5.2-arm64-arm-64bit"
+}

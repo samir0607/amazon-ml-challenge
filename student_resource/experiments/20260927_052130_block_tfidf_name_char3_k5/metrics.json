@@ -1,0 +1,16 @@
+{
+  "pair_recall": 0.45526142697238603,
+  "recall_s2": 0.40505027558913903,
+  "recall_s3": 0.502090790486067,
+  "entity_full_coverage": 0.19610419890205388,
+  "cand_mean": 5.0,
+  "cand_median": 5.0,
+  "cand_p95": 5.0,
+  "cand_max": 5,
+  "pct_q_no_cand": 0.0,
+  "n_cand_pairs": 250000,
+  "build_s": 45.7,
+  "query_s_50k": 325.8,
+  "runtime_s": 0.1,
+  "peak_rss_gb": 5.4
+}

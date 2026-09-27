@@ -1,0 +1,6 @@
+{
+  "blocker": "reverse tfidf nameaddr_word",
+  "norm": "v3",
+  "k_rev": 1,
+  "_platform": "macOS-26.5.2-arm64-arm-64bit"
+}

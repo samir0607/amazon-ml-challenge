@@ -1,0 +1,8 @@
+{
+  "macro_f05": 0.9702135992565241,
+  "f05_singletons": 0.96535114349322,
+  "f05_nonsingletons": 0.9705019085965914,
+  "best_iter": 661,
+  "runtime_s": 0.8,
+  "peak_rss_gb": 7.1
+}

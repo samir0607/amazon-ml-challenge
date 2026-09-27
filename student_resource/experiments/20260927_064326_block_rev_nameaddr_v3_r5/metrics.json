@@ -1,0 +1,7 @@
+{
+  "pair_recall": 0.9706,
+  "cand_mean": 23.45,
+  "cand_p95": 65,
+  "runtime_s": 0.0,
+  "peak_rss_gb": 0.02
+}

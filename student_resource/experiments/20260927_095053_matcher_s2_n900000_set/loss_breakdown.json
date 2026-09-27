@@ -1,0 +1,32 @@
+[
+  {
+    "category": "TOTAL",
+    "n_s1": 441365,
+    "loss": 0.03048284948578725,
+    "blocking_ceiling_loss": 0.0059278436487833165
+  },
+  {
+    "category": "singleton_false_match",
+    "n_s1": 797,
+    "loss": 0.0018057616711791827,
+    "blocking_ceiling_loss": 0.0
+  },
+  {
+    "category": "nonsingleton_predicted_empty",
+    "n_s1": 3158,
+    "loss": 0.0071550757309709655,
+    "blocking_ceiling_loss": 0.0014832793653977402
+  },
+  {
+    "category": "nonsingleton_with_fp",
+    "n_s1": 12157,
+    "loss": 0.007413728256502273,
+    "blocking_ceiling_loss": 0.00019002716181296857
+  },
+  {
+    "category": "nonsingleton_fn_only",
+    "n_s1": 73435,
+    "loss": 0.014108283827134836,
+    "blocking_ceiling_loss": 0.004254537121572607
+  }
+]

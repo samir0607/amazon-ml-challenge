@@ -1,0 +1,7 @@
+exp_id,stage,description,tier,macro_f05,micro_precision,micro_recall,f05_singletons,decision,notes
+20260927_092251_matcher_v1,matching,two-stage LightGBM + context features,fold0,0.9669,0.9909,0.92886,0.93572,,
+20260927_093021_matcher_s2_baseline_rerun,matching,stage-2 experiment s2_baseline_rerun,fold0,0.96721,,,0.95977,,
+20260927_093441_matcher_s2_n300000_set,matching,stage-2 experiment s2_n300000_set,fold0,0.96846,,,0.96551,,
+20260927_095053_matcher_s2_n900000_set,matching,stage-2 experiment s2_n900000_set,fold0,0.96952,,,0.96774,,
+20260927_101915_matcher_s2_n300000_set_sib,matching,stage-2 experiment s2_n300000_set_sib,fold0,0.97021,,,0.96535,,
+20260927_115906_matcher_v2,matching,two-stage LightGBM + context features,fold0,0.97207,0.9924,0.94171,0.95887,,

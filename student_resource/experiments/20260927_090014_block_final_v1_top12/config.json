@@ -1,0 +1,37 @@
+{
+  "specs": [
+    {
+      "name": "rev_nameaddr",
+      "kind": "rev",
+      "cfg": "nameaddr_word",
+      "k": 5
+    },
+    {
+      "name": "rev_addr",
+      "kind": "rev",
+      "cfg": "addr_word",
+      "k": 3
+    },
+    {
+      "name": "rev_name",
+      "kind": "rev",
+      "cfg": "name_word",
+      "k": 3
+    },
+    {
+      "name": "fwd_nameaddr",
+      "kind": "fwd",
+      "cfg": "nameaddr_word",
+      "k": 30
+    },
+    {
+      "name": "fwd_addr",
+      "kind": "fwd",
+      "cfg": "addr_word",
+      "k": 10
+    }
+  ],
+  "top_n": 12,
+  "pruner_s1": 150000,
+  "_platform": "macOS-26.5.2-arm64-arm-64bit"
+}

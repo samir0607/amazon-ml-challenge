@@ -1,0 +1,5 @@
+{
+  "pruner": "lgb on retrieval feats (150k S1 folds1-4)",
+  "top_n": 15,
+  "_platform": "macOS-26.5.2-arm64-arm-64bit"
+}
