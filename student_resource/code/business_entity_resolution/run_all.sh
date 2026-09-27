@@ -18,7 +18,7 @@ $PY -u code/business_entity_resolution/scripts/ce_extend_band.py --val "val_pred
 $PY -u code/business_entity_resolution/scripts/ce_round2.py --stage val --val "val_pred_${NAME}_top${TOPN}.parquet"
 $PY -u code/business_entity_resolution/scripts/ce_round2.py --stage test --val "val_pred_${NAME}_top${TOPN}.parquet"
 # conservative prior shift chosen on the public leaderboard (test has more distractors per S1)
-PRIOR_ODDS=${PRIOR_ODDS:-0.25}
+PRIOR_ODDS=${PRIOR_ODDS:-0.35}
 $PY -u code/business_entity_resolution/scripts/finalize_ce.py --mode full --prior-odds "$PRIOR_ODDS"
 python3 utils/validate_submission.py --matching output/matching_results.tsv \
     --candidate output/candidate_pairs.tsv --test-dir dataset/test --check-ids

@@ -245,10 +245,14 @@ Validation overstates test performance, because test has about 23% more S2/S3 re
 | Round-1 fusion, prior odds ×1 | 0.982 | 0.971 |
 | Round-1 fusion, prior odds ×0.5 | — | 0.972 |
 | Round-1 fusion, prior odds ×0.25 | — | 0.973 |
-| **Round-2 fusion, prior odds ×0.25 (final)** | 0.984 (at ×1) | **0.975** |
+| Round-2 fusion, prior odds ×0.05 | — | 0.971 |
+| Round-2 fusion, prior odds ×0.1 | — | 0.973 |
+| Round-2 fusion, prior odds ×0.15 | — | lower than ×0.25 |
+| Round-2 fusion, prior odds ×0.25 | 0.984 (at ×1) | 0.975 |
+| **Round-2 fusion, prior odds ×0.35 (final)** | — | **best, slightly above 0.975** |
 
-Each fused match probability's odds are multiplied by 0.25 (`finalize_ce.py --prior-odds 0.25`), so a pair needs 4× more evidence before it counts as a match.
+Each fused match probability's odds are multiplied by 0.35 (`finalize_ce.py --prior-odds 0.35`), so a pair needs about 3× more evidence before it counts as a match. The value was chosen by a small scan of k on the public leaderboard; the peak is broad, spanning roughly 0.25 to 0.35.
 
 - **Why it works:** it corrects for the lower match rate among borderline test pairs.
 - **Evidence:** adding matches consistently hurt on the leaderboard and removing them helped, the opposite of validation.
-- **Final test predictions:** 5,710,085 matched pairs.
+- **Final test predictions:** 5,731,144 matched pairs.

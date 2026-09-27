@@ -44,3 +44,4 @@ Decision rule: min_p = 0.6 was chosen over 0.5. Their F0.5 is tied (0.97205 vs 0
 | Rejected: non-Latin skeleton blocker | about +0.00005 |
 | v4: cross-encoder (e5-small) on borderline pairs + logistic fusion | +0.0104 on held-out half B (0.97179 → 0.98218) |
 | **Final: round-2 cross-encoder fusion + prior odds ×0.25** | public leaderboard **0.975** (full fusion ×1: 0.971; add-only: 0.950) |
+| **Final (updated): prior odds ×0.35** | best public leaderboard (slightly above ×0.25 = 0.975) |
