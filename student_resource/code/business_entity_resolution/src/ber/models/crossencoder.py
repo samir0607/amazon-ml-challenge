@@ -45,7 +45,7 @@ def pair_texts(pairs: pl.DataFrame, split: str) -> tuple[list, list]:
 
 
 class CrossEncoder:
-    def __init__(self, path: str | None = None, max_len: int = 128):
+    def __init__(self, path: str | None = None, max_len: int = 96):
         self.dev = device()
         src = path or MODEL_NAME
         self.tok = AutoTokenizer.from_pretrained(src, cache_dir=HF_HOME)
@@ -54,10 +54,11 @@ class CrossEncoder:
         self.dtype = torch.float16 if self.dev in ("mps", "cuda") else torch.bfloat16
 
     def _enc(self, a, b):
-        e = self.tok(a, b, truncation=True, max_length=self.max_len, padding=True, return_tensors="pt")
+        # fixed-length padding: constant tensor shapes stop MPS from caching a new graph per length
+        e = self.tok(a, b, truncation=True, max_length=self.max_len, padding="max_length", return_tensors="pt")
         return {k: v.to(self.dev) for k, v in e.items()}
 
-    def train(self, a, b, y, epochs=1, bs=64, lr=4e-5, warmup=0.06, log_every=200, save_to=None, seed=0):
+    def train(self, a, b, y, epochs=1, bs=64, lr=4e-5, warmup=0.06, log_every=50, save_to=None, seed=0):
         rng = np.random.default_rng(seed)
         n = len(y)
         steps = epochs * math.ceil(n / bs)
@@ -92,7 +93,7 @@ class CrossEncoder:
         self.tok.save_pretrained(path)
 
     @torch.no_grad()
-    def predict(self, a, b, bs=256, log_every=200):
+    def predict(self, a, b, bs=256, log_every=50):
         self.model.eval()
         # length-sorted batching for speed; results restored to input order
         order = np.argsort([len(x) + len(y) for x, y in zip(a, b)])
