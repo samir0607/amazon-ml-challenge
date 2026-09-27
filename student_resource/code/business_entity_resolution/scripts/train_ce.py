@@ -21,6 +21,7 @@ ap.add_argument("--lo", type=float, default=0.02)
 ap.add_argument("--hi", type=float, default=0.98)
 ap.add_argument("--n-train", type=int, default=160_000)
 ap.add_argument("--stage", default="all", choices=["train", "oof", "val", "test", "all"])
+ap.add_argument("--model-name", default=None, help="reuse CE models trained under this name (default: --name)")
 args = ap.parse_args()
 
 folds = load_folds().select(q="idx", fold="fold")
@@ -38,7 +39,7 @@ print(f"uncertain train pairs: {P1.height}, pos rate {P1['y'].mean():.3f}", flus
 
 
 def model_dir(h):
-    return CACHE / f"ce_{args.name}_{h}"
+    return CACHE / f"ce_{args.model_name or args.name}_{h}"
 
 
 if args.stage in ("train", "all"):
