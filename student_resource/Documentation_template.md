@@ -14,7 +14,7 @@ We use a blocking-plus-two-stage-GBDT pipeline built entirely on the provided da
 - **Precision:** a stage-2 matcher uses competition features (how strongly each S1 beats the other S1s competing for the same record) and sibling-consistency features. A per-entity expected-F0.5 decision rule treats "no match" as a first-class outcome.
 - **Candidates:** a learned-blocking cascade (retrieval, then pruner, then pair scorer) keeps only **4.65 candidates per S1 on validation (5.12 on test)** at **98.0% candidate recall**.
 - **Neural re-scoring:** a multilingual cross-encoder (intfloat/multilingual-e5-small, MIT, 118M parameters) re-scores the borderline pairs.
-- **Result:** held-out macro F0.5 of **≈0.982** (0.98199 on a held-out half of the validation fold, vs 0.97179 without the cross-encoder).
+- **Result:** held-out macro F0.5 of **≈0.982** (0.98218 on a held-out half of the validation fold, vs 0.97179 without the cross-encoder).
 
 ---
 
@@ -150,7 +150,7 @@ Measured on the training data:
 
 - **Cross-encoder:**
   - Fine-tuned `intfloat/multilingual-e5-small` (MIT, 118M parameters) on 80k borderline training pairs (stage-1 p between 0.02 and 0.98, folds 1–4). Input is the raw text `name | address | country` for both records, max 96 tokens.
-  - At inference it scores only borderline candidate pairs (stage-2 p between 0.02 and 0.98): 2.49M of the 8.88M test candidates.
+  - At inference it scores only borderline candidate pairs (stage-2 p between 0.02 and 0.995): 2.86M of the 8.88M test candidates.
   - Its logit is fused with the stage-2 logit by logistic regression, fitted on half of the validation fold.
   - It reads Indic scripts and transliterations directly: borderline AUC rises from 0.916 to 0.949.
 
@@ -165,7 +165,7 @@ These parameters were tuned on half of the validation fold and confirmed on the 
 
 ## 5. Results & Error Analysis
 
-**F_0.5 Score (macro):** **0.98199** with the cross-encoder, on a held-out half of the validation fold (about 220k S1 unseen by the cross-encoder and fusion; 0.97179 without it). The GBDT-only pipeline scores 0.97217 on the full validation fold of 441,365 S1, and 5-fold cross-validation of its decision rule gives 0.97101 ± 0.00004.
+**F_0.5 Score (macro):** **0.98218** with the cross-encoder, on a held-out half of the validation fold (about 220k S1 unseen by the cross-encoder and fusion; 0.97179 without it). The GBDT-only pipeline scores 0.97217 on the full validation fold of 441,365 S1, and 5-fold cross-validation of its decision rule gives 0.97101 ± 0.00004.
 
 | Metric | Value |
 |---|---|
