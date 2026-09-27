@@ -1,0 +1,13 @@
+
+student_resource/dataset/_lfs_pointers/
+student_resource/.venv/
+student_resource/cache/
+student_resource/output/*.tsv
+student_resource/experiments/*/predictions/
+student_resource/experiments/*/models/
+__pycache__/
+*.pyc
+
+student_resource/*.zip
+student_resource/experiments/logs_*.txt
+student_resource/experiments/submissions/
