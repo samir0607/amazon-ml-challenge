@@ -13,7 +13,8 @@ We use a blocking-plus-two-stage-GBDT pipeline built entirely on the provided da
 - **Key innovation:** *reverse* blocking. Every S2/S3 record retrieves its best S1 entities, which exploits the fact that each record belongs to at most one S1. Its top-1 alone captures 94.6% of true pairs at 4.7 candidates per S1.
 - **Precision:** a stage-2 matcher uses competition features (how strongly each S1 beats the other S1s competing for the same record) and sibling-consistency features. A per-entity expected-F0.5 decision rule treats "no match" as a first-class outcome.
 - **Candidates:** a learned-blocking cascade (retrieval, then pruner, then pair scorer) keeps only **4.65 candidates per S1 on validation (5.12 on test)** at **98.0% candidate recall**.
-- **Result:** held-out macro F0.5 of **0.9722**, confirmed by 5-fold cross-validation.
+- **Neural re-scoring:** a multilingual cross-encoder (intfloat/multilingual-e5-small, MIT, 118M parameters) re-scores the borderline pairs.
+- **Result:** held-out macro F0.5 of **≈0.982** (0.98199 on a held-out half of the validation fold, vs 0.97179 without the cross-encoder).
 
 ---
 
@@ -138,7 +139,7 @@ Measured on the training data:
     - set-level expected match count and number of candidates above 0.5 / 0.2
   - **sibling consistency:** similarity of the target to the S1's other plausible records (S2↔S3 and within-source), weighted by their probability
 
-**Model type:** Two-stage LightGBM (binary log-loss).
+**Model type:** Two-stage LightGBM (binary log-loss) plus a cross-encoder re-scorer.
 - **Stage 1:** 5-fold cross-fitted, 600k S1 per fold model, 71 features.
 - **Stage 2:** 90 features, trained on 1.2M S1 with 25% sampling of easy negatives and importance weights.
 - **Tuning:** screened on a fixed 400k-S1 sample, then confirmed at full size:
@@ -146,6 +147,12 @@ Measured on the training data:
   - a LightGBM + CatBoost blend gained +0.00011 at 400k S1 but lost 0.00013 at full size, so it was rejected
 - **Negatives:** hard negatives come from the candidate set itself (retrieved lookalikes: same brand in another location, same address, generic names, sibling entities).
 - **Test-time stage 1:** the average of the 5 fold models.
+
+- **Cross-encoder:**
+  - Fine-tuned `intfloat/multilingual-e5-small` (MIT, 118M parameters) on 80k borderline training pairs (stage-1 p between 0.02 and 0.98, folds 1–4). Input is the raw text `name | address | country` for both records, max 96 tokens.
+  - At inference it scores only borderline candidate pairs (stage-2 p between 0.02 and 0.98): 2.49M of the 8.88M test candidates.
+  - Its logit is fused with the stage-2 logit by logistic regression, fitted on half of the validation fold.
+  - It reads Indic scripts and transliterations directly: borderline AUC rises from 0.916 to 0.949.
 
 **Threshold selection method:**
 1. **Exclusivity:** each target keeps only its best S1.
@@ -158,7 +165,7 @@ These parameters were tuned on half of the validation fold and confirmed on the 
 
 ## 5. Results & Error Analysis
 
-**F_0.5 Score (macro):** **0.97217** on a held-out validation fold of 441,365 S1 entities (grouped split, full target index). 5-fold cross-validation of the decision rule gives 0.97101 ± 0.00004.
+**F_0.5 Score (macro):** **0.98199** with the cross-encoder, on a held-out half of the validation fold (about 220k S1 unseen by the cross-encoder and fusion; 0.97179 without it). The GBDT-only pipeline scores 0.97217 on the full validation fold of 441,365 S1, and 5-fold cross-validation of its decision rule gives 0.97101 ± 0.00004.
 
 | Metric | Value |
 |---|---|
@@ -175,7 +182,8 @@ Progression:
 | + set features | 0.9685 |
 | + sibling features | 0.9702 |
 | + more data | 0.9721 |
-| + learned-blocking cascade (final, 4.65 candidates per S1) | 0.9722 |
+| + learned-blocking cascade (4.65 candidates per S1) | 0.9722 |
+| + cross-encoder fusion on borderline pairs (final) | **0.9820** |
 
 **Common false positives (wrong merges):**
 - same name and street with a conflicting building number
@@ -217,7 +225,7 @@ The pipeline stages are:
 2. `train_matcher.py --final`
 3. `predict_test.py`
 
-Every stage is cached. The pipeline makes no external calls. LightGBM (MIT), rapidfuzz (MIT) and scikit-learn (BSD) are the modelling libraries; no pretrained model is used in the final submission.
+Every stage is cached. The pipeline makes no external calls. LightGBM (MIT), rapidfuzz (MIT) and scikit-learn (BSD) are the modelling libraries; the only pretrained model is intfloat/multilingual-e5-small (MIT, 118M parameters), fine-tuned locally on the training data.
 
 ### B. Additional Results
 

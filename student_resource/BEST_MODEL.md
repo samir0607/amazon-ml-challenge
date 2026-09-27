@@ -1,6 +1,6 @@
 # Current best pipeline
 
-**Validation (fold 0, 441,365 S1, full target index): macro F0.5 = 0.97217** (v3 cascade; 2026-09-27)
+**Validation: macro F0.5 = 0.98199** on held-out half B of fold 0 (v4 = v3 cascade + cross-encoder fusion; base 0.97179 on the same half). The GBDT-only v3 scores 0.97217 on all of fold 0.
 5-fold CV of the decision rule: 0.97101 ± 0.00004.
 Candidate set: learned-blocking cascade, 4.65 candidates per S1 on validation (5.12 on test), pair recall 0.9797.
 
@@ -42,3 +42,4 @@ Decision rule: min_p = 0.6 was chosen over 0.5. Their F0.5 is tied (0.97205 vs 0
 | v3: learned-blocking cascade (stage-1 p1 ≥ 0.01 defines `candidate_pairs.tsv`); stage 2 retrained on survivors | 0.97205 → 0.97217, 12 → 4.65 candidates per S1 |
 | 5-fold CV of the decision rule and τ | final rule best on 4/4 folds |
 | Rejected: non-Latin skeleton blocker | about +0.00005 |
+| v4: cross-encoder (e5-small) on borderline pairs + logistic fusion | +0.0102 on held-out half B (0.97179 → 0.98199) |

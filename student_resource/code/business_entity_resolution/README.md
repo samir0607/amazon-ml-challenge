@@ -1,6 +1,6 @@
 # Business Entity Resolution: reproducible pipeline
 
-This pipeline regenerates `output/candidate_pairs.tsv` and `output/matching_results.tsv` from the challenge TSVs. Everything runs locally. There is no external lookup, API or data. The only pretrained weights referenced (optional cross-encoder, not used in the final submission) are MIT-licensed.
+This pipeline regenerates `output/candidate_pairs.tsv` and `output/matching_results.tsv` from the challenge TSVs. Everything runs locally. There is no external lookup, API or data. The only pretrained weights used are intfloat/multilingual-e5-small (MIT, 118M parameters), downloaded from Hugging Face and fine-tuned locally.
 
 ## Setup
 
@@ -32,7 +32,8 @@ Steps, each cached under `cache/` and keyed by its configuration (so reruns skip
 | 2 | `scripts/train_matcher.py --tag v2 --feat-tag v1 --top-n 12 --train-s1 600000 --final` | Union, then pruner (top-12), pair features, 5-fold stage-1 LightGBM, **cascade filter p1 ≥ 0.01 (`--cascade-tau`)**, context and sibling features within the survivors, stage-2 LightGBM, decision-rule sweep on fold 0, final stage-2 on all folds |
 | 3 | `scripts/run_blockers.py test ...` | Same blockers on the test split |
 | 4 | `scripts/predict_test.py --name v2_top12` | Test retrieval and pruning, stage-1 scores, cascade filter (survivors are written to `output/candidate_pairs.tsv`), stage-2 scoring of the survivors, decision rule, `output/matching_results.tsv` |
-| 5 | `utils/validate_submission.py --check-ids` | Official validator |
+| 5 | `scripts/ce_lite.py` then `scripts/finalize_ce.py` | Cross-encoder (multilingual-e5-small, MIT) fine-tuned on 80k borderline train pairs, borderline fold-0/test pairs scored, logistic fusion (validated on a held-out half of fold 0), final `output/matching_results.tsv` |
+| 6 | `utils/validate_submission.py --check-ids` | Official validator |
 
 Resources:
 
@@ -56,7 +57,7 @@ Resources:
 | `decide.py` | Exclusivity and per-S1 expected-F0.5 subset selection |
 | `errors.py` | Loss decomposition and FP/FN categorization |
 | `experiment.py` | Experiment IDs, configs, metrics, `experiments/experiment_log.csv` |
-| `models/crossencoder.py` | Optional multilingual-e5-small cross-encoder (not used in the final submission) |
+| `models/crossencoder.py` | multilingual-e5-small cross-encoder (fixed-length padding for Apple MPS), used for borderline pairs |
 
 `scripts/` also contains:
 

@@ -1,6 +1,6 @@
 # Business Entity Resolution: Final Report
 
-**Final validation score: macro F0.5 = 0.97217.** This is measured on fold 0: 441,365 held-out Source 1 (S1) entities, matched against the full train S2/S3 index.
+**Final validation score: macro F0.5 ≈ 0.982** with the cross-encoder fusion. This is **0.98199** on held-out half B of fold 0 (about 220k S1 never seen by the cross-encoder or the fusion model), versus 0.97179 without it on the same half. The GBDT-only pipeline scores 0.97217 on all of fold 0 (441,365 held-out S1, matched against the full train S2/S3 index).
 
 The final candidate set is the output of a three-step blocking cascade. It averages **4.65 candidates per S1 on validation and 5.12 on test** (p95 = 9, max = 12), keeping 97.97% of true pairs. The decision rule and the cascade threshold were confirmed by 5-fold cross-validation (mean 0.97101, std 0.00004 across folds). The submission passes the official validator (`--check-ids`, no subset warnings).
 
@@ -100,7 +100,8 @@ All rows are on fold 0 (441,365 S1) with the full candidate set.
 | + more stage-2 data (300k → 900k S1) | — | — | 0.9695 |
 | + sibling-consistency features (300k S1) | — | — | 0.9702 |
 | v2: stage-1 on 600k S1 per fold, stage-2 on 1.2M S1, set + sibling features (12 candidates) | 0.9926 | 0.9415 | 0.97205 |
-| **v3 final: v2 + cascade (p1 ≥ 0.01, 4.65 candidates), stage 2 retrained on survivors** | **0.9926** | **0.9420** | **0.97217** |
+| v3: v2 + cascade (p1 ≥ 0.01, 4.65 candidates), stage 2 retrained on survivors | 0.9926 | 0.9420 | 0.97217 |
+| **v4 final: v3 + cross-encoder (multilingual-e5-small, MIT) on borderline pairs, logistic fusion; fold-0 half B** | — | — | **0.98199** (base 0.97179 on the same half) |
 
 Decision rules for the v2 scores:
 
@@ -133,6 +134,7 @@ Decision rules for the v2 scores:
 | Stage-2 LightGBM tuning (lr 0.03, 127/511 leaves, min leaf 300, feature fraction 0.6, L2 5), 400k S1 | all within ±0.0001 of the production parameters; current parameters kept |
 | LightGBM + CatBoost blend (0.7 / 0.3) | +0.00011 at 400k S1, but **−0.00013 at full 1.2M S1**; rejected |
 | LightGBM L2 = 5 at full size | 0.972177 vs 0.97217 (tie); kept L2 = 1 |
+| **Cross-encoder fusion on borderline pairs** (0.02 < p < 0.98; 427k fold-0 pairs, 2.49M test pairs) | **+0.0102** on held-out half B (0.97179 → 0.98199); singleton F0.5 0.968 → 0.980; borderline AUC 0.916 → 0.949 (cross-encoder alone) |
 
 These components were planned but **not run** because of compute and time: a neural cross-encoder, dense embeddings, a fine-tuned bi-encoder, and synthetic augmentation. See section 12.
 
@@ -188,6 +190,7 @@ S1, S2, S3 TSVs
   → cascade filter p1 >= 0.01 (about 4.65/S1)  == candidate_pairs.tsv
   → context within survivors (per-S1 rank/gap/set stats, per-target competition margin) + sibling consistency
   → stage-2 LightGBM
+  → cross-encoder (multilingual-e5-small) on borderline pairs (0.02 < p < 0.98), logistic fusion with p
   → exclusivity (each target keeps its best S1) → per-S1 expected-F0.5 subset (min_p 0.6)
   → matching_results.tsv
 ```
@@ -212,8 +215,8 @@ S1, S2, S3 TSVs
 | S1 with no candidates | 19,706 (the cascade found nothing plausible) |
 | Candidates per S1 by country | US 5.06, India 4.99, France 5.71 |
 | Reduction ratio vs same-country all-pairs | > 99.9999% |
-| Predicted matches | 5,899,104 pairs (3.40 per S1) |
-| S1 predicted with no match | 97,583 (5.6%; train singleton rate is 5.6%) |
+| Predicted matches | 5,829,620 pairs (3.36 per S1) |
+| S1 predicted with no match | 97,813 (5.6%; train singleton rate is 5.6%) |
 
 Predictions by country:
 
@@ -249,8 +252,9 @@ Main false-negative causes:
 Other limitations:
 
 - **Stage-2 tuning has converged.** Parameter variants, CatBoost, and blends all landed within noise of the production model.
+- **The cross-encoder is under-trained.** It saw only 80k borderline pairs (about 11 minutes on Apple MPS) because of the deadline, and one model scores both validation and test. More training data, cross-fitted models feeding stage 2 directly, and a wider band are the clearest next gains.
+- **Engineering note:** padding every batch to a fixed length (96 tokens) was essential on MPS. Variable-length batches made the GPU cache a compiled graph per shape until the machine swapped.
 - **Not attempted because of compute:**
-  - **The cross-encoder** (`ber/models/crossencoder.py`, `scripts/train_ce.py`) is implemented and smoke-tested. It trains at about 85 pairs/s on Apple MPS, so a full run needs about 3.3 h, and the AWS account had GPU quota 0.
   - **The non-Latin skeleton reverse blocker** (`rev_skel_nonascii`) was run on train but not integrated, because that requires a full re-train.
 - **Test density risk.** The test set has about 23% more targets per S1 than train, likely more distractors. Precision on test may be slightly below validation. The decision gate was chosen conservatively for this reason.
 - **French-specific noise** has no training signal. Its handling relies on language-agnostic features and generic plus France-scoped abbreviation rules.
