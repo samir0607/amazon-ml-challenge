@@ -1,0 +1,12 @@
+{
+  "tau": 0.01,
+  "macro_f05": 0.9717313448095404,
+  "f05_singletons": 0.9679821898401133,
+  "pair_recall": 0.9796997459932762,
+  "cand_mean": 4.644210574014704,
+  "cand_p95": 8.0,
+  "cand_max": 12,
+  "best_iter": 1034,
+  "runtime_s": 0.0,
+  "peak_rss_gb": 5.14
+}

@@ -52,3 +52,10 @@ exp_id,timestamp,stage,description,tier,runtime_s,peak_rss_gb,pair_recall,cand_m
 20260927_095053_matcher_s2_n900000_set,2026-09-27 09:50,matching,stage-2 experiment s2_n900000_set,fold0,0.5,7.01,,,,0.96952,,,0.96774,,
 20260927_101915_matcher_s2_n300000_set_sib,2026-09-27 10:19,matching,stage-2 experiment s2_n300000_set_sib,fold0,0.8,7.1,,,,0.97021,,,0.96535,,
 20260927_115906_matcher_v2,2026-09-27 11:59,matching,two-stage LightGBM + context features,fold0,0.1,9.66,,,,0.97207,0.9924,0.94171,0.95887,,
+20260927_174909_cascade_tau0.0,2026-09-27 17:49,matching,cascade p1>=0.0 + stage-2 retrained (600000 S1),fold0,0.2,5.14,0.98162,12.0,12.0,0.97165,,,0.96717,,
+20260927_175158_cascade_tau0.01,2026-09-27 17:51,matching,cascade p1>=0.01 + stage-2 retrained (600000 S1),fold0,0.0,5.14,0.9797,4.64421,8.0,0.97173,,,0.96798,,
+20260927_175409_cascade_tau0.03,2026-09-27 17:54,matching,cascade p1>=0.03 + stage-2 retrained (600000 S1),fold0,0.0,5.14,0.97627,4.02651,7.0,0.97161,,,0.96758,,
+20260927_175610_cascade_tau0.05,2026-09-27 17:56,matching,cascade p1>=0.05 + stage-2 retrained (600000 S1),fold0,0.0,5.14,0.97458,3.88476,7.0,0.97155,,,0.96794,,
+20260927_195036_cv_decision_5fold,2026-09-27 19:50,decision,5-fold CV of decision rule + cascade tau,cv,0.0,0.02,0.97983,4.6498,,0.97101,,,0.96747,"keep: global exclusivity + expF(0.6,0.2) + tau 0.01",best of grid on 4/4 folds; std 0.000043; tau 0.01 costs -0.000001 vs 12 cands
+20260927_195100_recall_skel_nonascii_blocker,2026-09-27 19:51,blocking,"add reverse skeleton char blocker for non-Latin names (screen, scored by OOF stage-1)",screen,0.0,0.02,,,,,,,,reject,"+96/173318 true pairs (0.05%), only ~39 matchable -> ~+0.00005 F; adds ~0.016 cands/S1 and 2.5h retrain"
+20260927_195446_matcher_v2,2026-09-27 19:54,matching,two-stage LightGBM + context features,fold0,0.1,9.32,,,,0.97219,0.9924,0.94216,0.95928,,

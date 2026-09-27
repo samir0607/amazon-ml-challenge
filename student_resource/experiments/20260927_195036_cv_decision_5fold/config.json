@@ -1,0 +1,5 @@
+{
+  "grid": "tau x excl scope x expF(min_p,extra)/thr",
+  "folds": "1-4 (stage-2 cross-fitted, 300k S1)",
+  "_platform": "macOS-26.5.2-arm64-arm-64bit"
+}

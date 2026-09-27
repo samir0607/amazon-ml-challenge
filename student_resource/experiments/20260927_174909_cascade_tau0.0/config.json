@@ -1,0 +1,8 @@
+{
+  "taus": "0,0.01,0.03,0.05",
+  "train_s1": 600000,
+  "name": "v2_top12",
+  "feat": "v1_top12",
+  "tau": 0.0,
+  "_platform": "macOS-26.5.2-arm64-arm-64bit"
+}

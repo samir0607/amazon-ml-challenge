@@ -1,0 +1,8 @@
+{
+  "macro_f05": 0.971007,
+  "f05_singletons": 0.967473,
+  "cand_mean": 4.6498,
+  "pair_recall": 0.979826,
+  "runtime_s": 0.0,
+  "peak_rss_gb": 0.02
+}
