@@ -69,11 +69,20 @@ else:
     P1 = P1.filter(pl.col("p1") >= tau) if tau > 0 else P1  # learned-blocking cascade
     S2X = stage2_frame("test", P1)
     b2 = lgb.Booster(model_file=str(CACHE / f"stage2_{args.name}_final.txt"))
+    wcat = cfg.get("blend_cat", 0.0)
+    cat = None
+    if wcat > 0:
+        from catboost import CatBoostClassifier
+        cat = CatBoostClassifier()
+        cat.load_model(str(CACHE / f"stage2_{args.name}_final_cat.cbm"))
     scored = []
     for pth in parts:
         d = pl.read_parquet(pth).join(S2X, on=["q", "t"], how="inner")
-        scored.append(d.select("q", "t", "p1").with_columns(
-            p=pl.Series(b2.predict(d.select(FEATS2).to_numpy().astype(np.float32), num_threads=9).astype(np.float32))))
+        X = d.select(FEATS2).to_numpy().astype(np.float32)
+        p = b2.predict(X, num_threads=9)
+        if cat is not None:
+            p = (1 - wcat) * p + wcat * cat.predict_proba(X)[:, 1]
+        scored.append(d.select("q", "t", "p1").with_columns(p=pl.Series(p.astype(np.float32))))
     F = pl.concat(scored)
     F.write_parquet(CACHE / f"test_scores_{args.name}.parquet")
 

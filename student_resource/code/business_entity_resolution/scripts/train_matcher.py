@@ -37,6 +37,8 @@ ap.add_argument("--s2-train-s1", type=int, default=1_200_000)
 ap.add_argument("--easy-neg-keep", type=float, default=0.25)
 ap.add_argument("--tag", default="v1")
 ap.add_argument("--final", action="store_true")
+ap.add_argument("--s2-l2", type=float, default=1.0, help="stage-2 LightGBM lambda_l2 (5.0 tied at full size)")
+ap.add_argument("--blend-cat", type=float, default=0.0, help="optional CatBoost stage-2 blend weight; 0.3 lost 0.00013 at full size, so off")
 ap.add_argument("--cascade-tau", type=float, default=0.01, help="learned-blocking filter: final candidates = pairs with stage-1 p1 >= tau")
 ap.add_argument("--rule-min-p", type=float, default=0.6, help="min_p fixed for the final expected-F rule (0.6 chosen for singleton robustness)")
 ap.add_argument("--feat-tag", default=None, help="reuse candidates/pair features of this tag")
@@ -111,7 +113,30 @@ PARAMS = dict(objective="binary", learning_rate=0.05, num_leaves=255, min_data_i
               verbose=-1, num_threads=9)
 
 
-def fit(df, feats, seed, rounds=3000):
+def fit_cat(df, feats, seed):
+    """CatBoost stage-2 (screened: depth 8, lr 0.08, l2 3), same early-stopping split as fit()."""
+    from catboost import CatBoostClassifier, Pool
+    qs = df["q"].unique().to_numpy()
+    es_q = np.random.default_rng(seed).choice(qs, len(qs) // 10, replace=False)
+    is_es = df["q"].is_in(es_q).to_numpy()
+    X, y = df.select(feats).to_numpy().astype(np.float32), df["y"].to_numpy()
+    w = df["w"].to_numpy() if "w" in df.columns else np.ones(len(y), np.float32)
+    m = CatBoostClassifier(depth=8, learning_rate=0.08, iterations=4000, l2_leaf_reg=3, thread_count=9,
+                           od_type="Iter", od_wait=100, verbose=0, random_seed=seed)
+    m.fit(Pool(X[~is_es], y[~is_es], weight=w[~is_es]), eval_set=Pool(X[is_es], y[is_es], weight=w[is_es]),
+          use_best_model=True)
+    return m
+
+
+def predict_blend(lgbm, catm, df, feats):
+    X = df.select(feats).to_numpy().astype(np.float32)
+    p = lgbm.predict(X, num_threads=9)
+    if catm is not None and args.blend_cat > 0:
+        p = (1 - args.blend_cat) * p + args.blend_cat * catm.predict_proba(X)[:, 1]
+    return p
+
+
+def fit(df, feats, seed, rounds=3000, params=None):
     qs = df["q"].unique().to_numpy()
     es_q = np.random.default_rng(seed).choice(qs, len(qs) // 10, replace=False)
     is_es = df["q"].is_in(es_q).to_numpy()
@@ -119,7 +144,7 @@ def fit(df, feats, seed, rounds=3000):
     w = df["w"].to_numpy() if "w" in df.columns else np.ones(len(y), np.float32)
     dtr = lgb.Dataset(X[~is_es], y[~is_es], weight=w[~is_es], feature_name=feats, free_raw_data=True)
     des = lgb.Dataset(X[is_es], y[is_es], weight=w[is_es], reference=dtr)
-    return lgb.train({**PARAMS, "seed": seed}, dtr, rounds, valid_sets=[des],
+    return lgb.train({**(params or PARAMS), "seed": seed}, dtr, rounds, valid_sets=[des],
                      callbacks=[lgb.early_stopping(100, verbose=False)])
 
 
@@ -176,12 +201,16 @@ def rows2(qs, seed):
 
 
 # ---------------------------------------------------------------- 6 stage-2
+PARAMS2 = {**PARAMS, "lambda_l2": args.s2_l2}
 tr = rows2(sample_q(pl.col("fold") != 0, args.s2_train_s1, 99), 0)
-b2 = fit(tr, FEATS2, 0)
+b2 = fit(tr, FEATS2, 0, params=PARAMS2)
+c2 = fit_cat(tr, FEATS2, 0) if args.blend_cat > 0 else None
 del tr
 b2.save_model(str(CACHE / f"stage2_{pair_name}_fold0.txt"))
 V = rows_for(folds.filter(pl.col("fold") == 0)["q"].to_numpy()).join(S2X, on=["q", "t"], how="inner")
-V = V.with_columns(p=pl.Series(predict(b2, V, FEATS2).astype(np.float32)))
+V = V.with_columns(p=pl.Series(predict_blend(b2, c2, V, FEATS2).astype(np.float32)),
+                   p_lgb=pl.Series(predict(b2, V, FEATS2).astype(np.float32)))
+print("fold0 lgb-only vs blend computed", flush=True)
 V.select("q", "t", "y", "p", "p1", "src").write_parquet(CACHE / f"val_pred_{pair_name}.parquet")
 imp = sorted(zip(FEATS2, b2.feature_importance("gain")), key=lambda x: -x[1])[:25]
 print("top features:", [(a, int(b)) for a, b in imp], flush=True)
@@ -197,6 +226,10 @@ def score(pred, tag, extra=None):
     m = macro_f05(pr, gt_val, val_ids["s1_id"])
     return m
 
+
+for which in ("p_lgb", "p"):
+    m = score(expected_f(exclusive(V.select("q", "t", p=pl.col(which))), min_p=args.rule_min_p, extra_mass=0.2), "")
+    print(f"production rule, {which}: macro F0.5 {m['macro_f05']:.6f} singleton {m['f05_singletons']:.5f}", flush=True)
 
 results = []
 for which in ("p1", "p"):
@@ -235,9 +268,12 @@ ex.finish()
 # ---------------------------------------------------------------- 8 final stage-2 on all folds
 if args.final:
     tr = rows2(sample_q(pl.col("fold") >= 0, args.s2_train_s1, 123), 1)
-    bf = fit(tr, FEATS2, 7)
+    bf = fit(tr, FEATS2, 7, params=PARAMS2)
     bf.save_model(str(CACHE / f"stage2_{pair_name}_final.txt"))
+    if args.blend_cat > 0:
+        fit_cat(tr, FEATS2, 7).save_model(str(CACHE / f"stage2_{pair_name}_final_cat.cbm"))
     (CACHE / f"final_{pair_name}.json").write_text(json.dumps(
         {"base": BASE, "feats2": FEATS2, "rule": {k: best[k] for k in ("score", "rule", "thr", "excl", "min_p", "extra_mass")},
-         "top_n": args.top_n, "tag": args.tag, "feat_tag": args.feat_tag, "cascade_tau": args.cascade_tau}))
+         "top_n": args.top_n, "tag": args.tag, "feat_tag": args.feat_tag, "cascade_tau": args.cascade_tau,
+         "blend_cat": args.blend_cat, "s2_l2": args.s2_l2}))
     print("saved final stage-2", flush=True)
