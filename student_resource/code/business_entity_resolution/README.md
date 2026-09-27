@@ -28,11 +28,11 @@ Steps, each cached under `cache/` and keyed by its configuration (so reruns skip
 
 | Step | Script | What it does |
 |---|---|---|
-| 1 | `scripts/run_blockers.py train ...` | Normalization (v3) plus 5 country-scoped TF-IDF blockers over all train S1 |
-| 2 | `scripts/train_matcher.py --tag v2 --feat-tag v1 --top-n 12 --train-s1 600000 --final` | Union, then pruner (top-12), pair features, 5-fold stage-1 LightGBM, **cascade filter p1 ≥ 0.01 (`--cascade-tau`)**, context and sibling features within the survivors, stage-2 LightGBM, decision-rule sweep on fold 0, final stage-2 on all folds |
-| 3 | `scripts/run_blockers.py test ...` | Same blockers on the test split |
-| 4 | `scripts/predict_test.py --name v2_top12` | Test retrieval and pruning, stage-1 scores, cascade filter (survivors are written to `output/candidate_pairs.tsv`), stage-2 scoring of the survivors, decision rule, `output/matching_results.tsv` |
-| 5 | `scripts/ce_lite.py` then `scripts/finalize_ce.py` | Cross-encoder (multilingual-e5-small, MIT) fine-tuned on 80k borderline train pairs, borderline fold-0/test pairs scored, logistic fusion (validated on a held-out half of fold 0), final `output/matching_results.tsv` |
+| 1 | `src/scripts/run_blockers.py train ...` | Normalization (v3) plus 5 country-scoped TF-IDF blockers over all train S1 |
+| 2 | `src/scripts/train_matcher.py --tag v2 --feat-tag v1 --top-n 12 --train-s1 600000 --final` | Union, then pruner (top-12), pair features, 5-fold stage-1 LightGBM, **cascade filter p1 ≥ 0.01 (`--cascade-tau`)**, context and sibling features within the survivors, stage-2 LightGBM, decision-rule sweep on fold 0, final stage-2 on all folds |
+| 3 | `src/scripts/run_blockers.py test ...` | Same blockers on the test split |
+| 4 | `src/scripts/predict_test.py --name v2_top12` | Test retrieval and pruning, stage-1 scores, cascade filter (survivors are written to `output/candidate_pairs.tsv`), stage-2 scoring of the survivors, decision rule, `output/matching_results.tsv` |
+| 5 | `src/scripts/ce_lite.py` then `src/scripts/finalize_ce.py` | Cross-encoder (multilingual-e5-small, MIT) fine-tuned on 80k borderline train pairs, borderline fold-0/test pairs scored, logistic fusion (validated on a held-out half of fold 0), final `output/matching_results.tsv` |
 | 6 | `utils/validate_submission.py --check-ids` | Official validator |
 
 Resources:
@@ -41,7 +41,7 @@ Resources:
 - **Peak memory:** about 7 GB.
 - **Disk:** about 60 GB of cache.
 
-## Source layout (`src/ber/`)
+## Source layout (all code is under `src/`: library `src/ber/`, entry points `src/scripts/`, tests `src/tests/`)
 
 | Module | Purpose |
 |---|---|
@@ -59,7 +59,7 @@ Resources:
 | `experiment.py` | Experiment IDs, configs, metrics, `experiments/experiment_log.csv` |
 | `models/crossencoder.py` | multilingual-e5-small cross-encoder (fixed-length padding for Apple MPS), used for borderline pairs |
 
-`scripts/` also contains:
+`src/scripts/` (entry points, run with `PYTHONPATH=code/business_entity_resolution/src`) also contains:
 
 - screening scripts: `block_screen_*.py`, `screen_union.py`, `exp_stage2.py`, `exp_cascade.py`, `exp_gbdt_*.py`, `recall_skel.py`
 - cross-validation: `cv_stage2.py` (stage 2 per fold) and `cv_decision.py` (decision-rule / cascade grid across folds)

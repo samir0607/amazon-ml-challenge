@@ -215,7 +215,7 @@ Treating exclusivity as signal made the biggest difference: in reverse blocking,
 Located in `code/business_entity_resolution/`:
 
 - `src/ber/`: library modules (see `README.md`)
-- `scripts/`: entry points
+- `src/scripts/`: entry points
 - `requirements.txt`: pinned versions
 - `run_all.sh`: one command that regenerates both output files and runs the validator
 

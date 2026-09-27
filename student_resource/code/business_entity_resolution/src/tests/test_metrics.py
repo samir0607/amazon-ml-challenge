@@ -1,5 +1,5 @@
 """Metric sanity checks against the README worked example and singleton rules.
-Run: PYTHONPATH=src python tests/test_metrics.py"""
+Run (from code/business_entity_resolution): PYTHONPATH=src python src/tests/test_metrics.py"""
 import polars as pl
 
 from ber.metrics import macro_f05

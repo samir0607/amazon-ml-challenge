@@ -6,7 +6,7 @@ import sys
 import time
 from pathlib import Path
 
-lock = Path(__file__).resolve().parents[3] / "cache" / ".heavy.lock"
+lock = Path(__file__).resolve().parents[4] / "cache" / ".heavy.lock"
 cmd = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:]
 with open(lock, "w") as f:
     t0 = time.time()
